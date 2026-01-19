@@ -1,8 +1,9 @@
 #include <imgui.h>
 #include <iostream>
+#include "core/board.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
-int main()
+/*int main()
 {
     float value{0.f};
 
@@ -40,6 +41,17 @@ int main()
 
                     ImGui::End();
                 },
+        }
+    );
+}*/
+
+int main()
+{
+    quick_imgui::loop(
+        "Chess",
+        {
+            .init = [&]() {},
+            .loop = [&]() { DrawBoard(); },
         }
     );
 }
