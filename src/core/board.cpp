@@ -28,9 +28,20 @@ void DrawBoard()
             // on applique les couleurs aux boutons
             ImGui::PushStyleColor(ImGuiCol_Button, base);
 
+            // hover
+            ImVec4 hover = base;
+            hover.x      = (hover.x + 0.08f > 1.f) ? 1.f : hover.x + 0.08f;
+            hover.y      = (hover.y + 0.08f > 1.f) ? 1.f : hover.y + 0.08f;
+            hover.z      = (hover.z + 0.08f > 1.f) ? 1.f : hover.z + 0.08f;
+
+            ImVec4 click = base;
+            click.x      = (click.x - 0.08f < 0.f) ? 0.f : click.x - 0.08f;
+            click.y      = (click.y - 0.08f < 0.f) ? 0.f : click.y - 0.08f;
+            click.z      = (click.z - 0.08f < 0.f) ? 0.f : click.z - 0.08f;
+
             // A MODIFIER POUR FAIRE LES HOVER ET CLICK
-            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, base);
-            ImGui::PushStyleColor(ImGuiCol_ButtonActive, base);
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+            ImGui::PushStyleColor(ImGuiCol_ButtonActive, click);
 
             ImGui::Button(" ", size);
 
