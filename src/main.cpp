@@ -1,7 +1,24 @@
 #include <imgui.h>
 #include <iostream>
-#include "core/board.hpp"
+#include "ui/Render.hpp"
+#include "Game.hpp"
 #include "quick_imgui/quick_imgui.hpp"
+
+int main()
+{
+    quick_imgui::loop(
+        "Chess",
+        {
+            .init = [&]() {},
+            .loop = [&]() { 
+                
+                Game game;
+                game.init();
+                game.render();
+            },
+        }
+    );
+}
 
 /*int main()
 {
@@ -44,14 +61,3 @@
         }
     );
 }*/
-
-int main()
-{
-    quick_imgui::loop(
-        "Chess",
-        {
-            .init = [&]() {},
-            .loop = [&]() { DrawBoard(); },
-        }
-    );
-}
