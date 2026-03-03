@@ -1,25 +1,45 @@
 #pragma once
 #include <cstdint>
-#include <string>
+#include <vector>
 
 enum class Color : std::uint8_t { 
     White,
     Black 
 };
 
+enum class PieceType : std::uint8_t {
+    Pawn,
+    Rook,
+    Knight,
+    Bishop,
+    Queen,
+    King
+};
+
+class Board; // Forward declaration of Board class
+
 class Piece {
     public:
-        Piece(int x, int y, Color color) : x(x), y(y), color(color) {}
+        Piece(Color color, PieceType type);
         virtual ~Piece() = default;
+        Piece(const Piece&) = delete;
+        Piece& operator=(const Piece&) = delete;
+        Piece(Piece&&) = delete;
+        Piece& operator=(Piece&&) = delete;
 
-        Color getColor() const { return color; }
-        int getX() const { return x; }
-        int getY() const { return y; }
-        std::string toString() const {
-            return "Piece at (" + std::to_string(x) + ", " + std::to_string(y) + ") of color " + (color == Color::White ? "White" : "Black");
-        }
-    private:
-        int x, y;
-        Color color;
-        
+        Color getColor() const { return m_color; }
+        PieceType getType() const { return m_type; }
+        bool hasMoved() const { return m_hasMoved; }
+        void setMoved() { m_hasMoved = true; }
+        void toString() const;
+
+        virtual bool isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const = 0; // Pure virtual function to be implemented by derived classes
+        virtual std::vector<std::pair<int, int>> getPossibleMoves(int row, int col, const Board& board) const = 0; // Pure virtual function to be implemented by derived classes
+
+    protected:
+        Color m_color;
+        PieceType m_type;
+        bool m_hasMoved;
+
+        bool isPathClear(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const;
 };

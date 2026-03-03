@@ -1,20 +1,25 @@
 #pragma once
-
 #include "core/Board.hpp"
+#include "ui/Renderer.hpp"
+#include "ui/InputHandler.hpp"
+#include <memory>
 
 class Game {
-public:
-    Game();
-    ~Game();
+    public:
+        Game();
+        ~Game();
 
-    void init();
-    void update();
-    void render();
+        bool initialize();
+        void run();
+        void shutdown();
 
-    bool isRunning() const { return m_isRunning; }
-    void quit() { m_isRunning = false; }
+    private:
+        std::unique_ptr<GameState> m_gameState;
+        std::unique_ptr<Renderer> m_renderer;
+        std::unique_ptr<InputHandler> m_inputHandler;
 
-private:
-    bool  m_isRunning;
-    Board m_board;
+        bool m_isRunning;
+
+        void update();
+        void render();
 };

@@ -1,20 +1,42 @@
 #include "Game.hpp"
-#include "ui/Render.hpp"
+#include <iostream>
 
-Game::Game() : m_isRunning(true) {
-}
+Game::Game() : m_isRunning(false) {}
 
 Game::~Game() {
+    shutdown();
 }
 
-void Game::init() {
-    m_board.initialize();
+bool Game::initialize() {
+    m_gameState = std::make_unique<GameState>();
+    m_renderer = std::make_unique<Renderer>();
+    m_inputHandler = std::make_unique<InputHandler>(*m_gameState, *m_renderer);
+
+    if (!m_renderer->initialize()) {
+        std::cerr << "Failed to initialize renderer\n";
+        return false;
+    }
+
+    m_isRunning = true;
+    return true;
+}
+
+void Game::run() {
+    update();
+    render();
 }
 
 void Game::update() {
-    // Update game logic here
+    m_inputHandler->handleInput();
 }
 
 void Game::render() {
-    DrawBoard(m_board);
+    m_renderer->render(*m_gameState);
+}
+
+void Game::shutdown() {
+    if (m_renderer) {
+        m_renderer->shutdown();
+    }
+    m_renderer = nullptr;
 }

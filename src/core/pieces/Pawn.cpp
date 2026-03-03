@@ -1,34 +1,66 @@
 #include "Pawn.hpp"
+#include "../Board.hpp"
+#include <cmath>
 #include <utility>
 
-Pawn::Pawn(int x, int y, Color color)
-    : Piece(x, y, color)
-{
+Pawn::Pawn(Color color) : Piece(color, PieceType::Pawn) {}
+
+bool Pawn::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const {
+    int direction = (m_color == Color::White) ? -1 : 1;
+    int rowDiff = toRow - fromRow;
+    int colDiff = std::abs(toCol - fromCol);
+    
+    // Avancer d'une case
+    if (colDiff == 0 && rowDiff == direction && board.isCellEmpty(toRow, toCol)) {
+        return true;
+    }
+    
+    // Avancer de deux cases depuis la position initiale
+    int startRow = (m_color == Color::White) ? 6 : 1;
+    if (!m_hasMoved && colDiff == 0 && rowDiff == 2 * direction && 
+        fromRow == startRow && board.isCellEmpty(toRow, toCol) &&
+        board.isCellEmpty(fromRow + direction, fromCol)) {
+        return true;
+    }
+    
+    // Capture en diagonale
+    if (colDiff == 1 && rowDiff == direction) {
+        Piece* targetPiece = board.getPieceAt(toRow, toCol);
+        if (targetPiece && targetPiece->getColor() != m_color) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
-std::vector<std::pair<int, int>> Pawn::getPossibleMoves() const {
+std::vector<std::pair<int, int>> Pawn::getPossibleMoves(int row, int col, const Board& board) const {
     std::vector<std::pair<int, int>> moves;
+    int direction = (m_color == Color::White) ? -1 : 1;
     
-    if(getColor() == Color::White) {
-        // Move forward
-        moves.emplace_back(getX(), getY() + 1);
-        // Initial double move
-        if (!hasMovedFromStart) {
-            moves.emplace_back(getX(), getY() + 2);
+    // Avancer d'une case
+    if (board.isValidPosition(row + direction, col) && 
+        board.isCellEmpty(row + direction, col)) {
+        moves.push_back({row + direction, col});
+        
+        // Avancer de deux cases
+        int startRow = (m_color == Color::White) ? 6 : 1;
+        if (!m_hasMoved && row == startRow && 
+            board.isCellEmpty(row + 2 * direction, col)) {
+            moves.push_back({row + 2 * direction, col});
         }
-        // Capture moves
-        moves.emplace_back(getX() - 1, getY() + 1);
-        moves.emplace_back(getX() + 1, getY() + 1);
-    } else {
-        // Move forward
-        moves.emplace_back(getX(), getY() - 1);
-        // Initial double move
-        if (!hasMovedFromStart) {
-            moves.emplace_back(getX(), getY() - 2);
+    }
+    
+    // Captures diagonales
+    for (int dc = -1; dc <= 1; dc += 2) {
+        int newRow = row + direction;
+        int newCol = col + dc;
+        if (board.isValidPosition(newRow, newCol)) {
+            Piece* piece = board.getPieceAt(newRow, newCol);
+            if (piece && piece->getColor() != m_color) {
+                moves.push_back({newRow, newCol});
+            }
         }
-        // Capture moves
-        moves.emplace_back(getX() - 1, getY() - 1);
-        moves.emplace_back(getX() + 1, getY() - 1);
     }
     
     return moves;

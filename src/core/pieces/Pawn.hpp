@@ -1,16 +1,11 @@
 #pragma once
 #include "../Piece.hpp"
-#include <vector>
-#include <utility>
 
 class Pawn : public Piece {
     public:
-        Pawn(int x, int y, Color color);
-        virtual ~Pawn() = default;
+        explicit Pawn(Color color);
+
+        bool isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const override;
+        std::vector<std::pair<int, int>> getPossibleMoves(int row, int col, const Board& board) const override;
         
-        // Retourne les positions possibles pour les mouvements du pion
-        std::vector<std::pair<int, int>> getPossibleMoves() const;
-        
-    private:
-        bool hasMovedFromStart = false;
 };

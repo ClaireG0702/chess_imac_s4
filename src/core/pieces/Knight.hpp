@@ -1,12 +1,10 @@
+#pragma once
 #include "../Piece.hpp"
-#include <vector>
-#include <utility>
 
 class Knight : public Piece {
     public:
-        Knight(int x, int y, Color color);
-        virtual ~Knight() = default;
-        
-        // Retourne les positions possibles pour les mouvements du fou
-        std::vector<std::pair<int, int>> getPossibleMoves() const;
+        explicit Knight(Color color);
+
+        bool isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const override;
+        std::vector<std::pair<int, int>> getPossibleMoves(int row, int col, const Board& board) const override;
 };
