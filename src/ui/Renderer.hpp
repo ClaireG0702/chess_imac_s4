@@ -1,6 +1,7 @@
 #pragma once
 #include "../core/GameState.hpp"
 #include <imgui.h>
+#include <vector>
 
 class Renderer {
     public:
@@ -27,4 +28,10 @@ class Renderer {
         ImU32 m_possibleMoveColor;
 
         void renderGameStatus(const GameState& gameState);
+        void renderBoard(GameState& gameState, float cellSize);
+        void renderCell(GameState& gameState, int x, int y, ImVec2 size, const std::vector<std::pair<int, int>>& possibleMoves);
+        
+        std::vector<std::pair<int, int>> getPossibleMoves(GameState& gameState) const;
+        ImU32 getCellColor(bool isLight, bool isSelected, bool isPossibleMove) const;
+        std::pair<ImVec4, ImVec4> getHoverAndClickColors(ImVec4 baseVec) const;
 };

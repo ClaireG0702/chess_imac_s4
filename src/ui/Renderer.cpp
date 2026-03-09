@@ -20,108 +20,20 @@ static const char* getPieceSymbol(const Piece* piece) {
     
     // Try to determine piece type using dynamic_cast
     if (dynamic_cast<const Pawn*>(piece)) {
-        return color == Color::White ? "PN" : "PB";
+        return color == Color::White ? "PB" : "PN";
     } else if (dynamic_cast<const Rook*>(piece)) {
-        return color == Color::White ? "TN" : "TB";
+        return color == Color::White ? "TB" : "TN";
     } else if (dynamic_cast<const Knight*>(piece)) {
-        return color == Color::White ? "CN" : "CB";
+        return color == Color::White ? "CB" : "CN";
     } else if (dynamic_cast<const Bishop*>(piece)) {
-        return color == Color::White ? "FN" : "FB";
+        return color == Color::White ? "FB" : "FN";
     } else if (dynamic_cast<const Queen*>(piece)) {
-        return color == Color::White ? "DN" : "DB";
+        return color == Color::White ? "DB" : "DN";
     } else if (dynamic_cast<const King*>(piece)) {
-        return color == Color::White ? "RN" : "RB";
+        return color == Color::White ? "RB" : "RN";
     }
     
     return "?";
-}
-
-static std::vector<std::pair<int, int>> getPossibleMovesForSelection(const GameState& gameState) {
-    std::vector<std::pair<int, int>> possibleMoves;
-    if (gameState.isCellSelected()) {
-        auto [selRow, selCol] = gameState.getSelectedCell();
-        Piece* selectedPiece = gameState.getBoard().getPieceAt(selRow, selCol);
-        if (selectedPiece) {
-            possibleMoves = selectedPiece->getPossibleMoves(selRow, selCol, gameState.getBoard());
-        }
-    }
-    return possibleMoves;
-}
-
-static ImU32 getCellColor(int x, int y, const GameState& gameState, 
-                          const std::vector<std::pair<int, int>>& possibleMoves, 
-                          ImU32 lightColor, ImU32 darkColor, ImU32 selectedColor, ImU32 moveColor) {
-    bool light = ((x + y) % 2 == 0);
-    bool isSelected = gameState.isCellSelected() && gameState.getSelectedCell() == std::make_pair(y, x);
-    bool isPossibleMove = std::find(possibleMoves.begin(), possibleMoves.end(), std::make_pair(y, x)) != possibleMoves.end();
-
-    if (isSelected) return selectedColor;
-    if (isPossibleMove) return moveColor;
-    return light ? lightColor : darkColor;
-}
-
-static void getColorVariations(ImU32 baseColor, ImVec4& hover, ImVec4& click) {
-    ImVec4 baseVec = ImGui::ColorConvertU32ToFloat4(baseColor);
-    hover = baseVec;
-    hover.x = (hover.x + 0.08f > 1.f) ? 1.f : hover.x + 0.08f;
-    hover.y = (hover.y + 0.08f > 1.f) ? 1.f : hover.y + 0.08f;
-    hover.z = (hover.z + 0.08f > 1.f) ? 1.f : hover.z + 0.08f;
-
-    click = baseVec;
-    click.x = (click.x - 0.08f < 0.f) ? 0.f : click.x - 0.08f;
-    click.y = (click.y - 0.08f < 0.f) ? 0.f : click.y - 0.08f;
-    click.z = (click.z - 0.08f < 0.f) ? 0.f : click.z - 0.08f;
-}
-
-static void handleCellClick(int x, int y, GameState& gameState, 
-                           const std::vector<std::pair<int, int>>& possibleMoves) {
-    bool isPossibleMove = std::find(possibleMoves.begin(), possibleMoves.end(), std::make_pair(y, x)) != possibleMoves.end();
-    
-    if (isPossibleMove && gameState.isCellSelected()) {
-        auto [fromRow, fromCol] = gameState.getSelectedCell();
-        gameState.makeMove(fromRow, fromCol, y, x);
-        gameState.deselectCell();
-    } else {
-        gameState.selectCell(y, x);
-    }
-}
-
-static void renderCell(int x, int y, const GameState& gameState, ImVec2 size,
-                      const std::vector<std::pair<int, int>>& possibleMoves,
-                      ImU32 lightColor, ImU32 darkColor, ImU32 selectedColor, ImU32 moveColor) {
-    ImGui::PushID(y * 8 + x);
-
-    ImU32 baseColor = getCellColor(x, y, gameState, possibleMoves, lightColor, darkColor, selectedColor, moveColor);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(baseColor));
-
-    ImVec4 hover, click;
-    getColorVariations(baseColor, hover, click);
-
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, click);
-
-    const Piece* piece = gameState.getBoard().getPieceAt(y, x);
-    const char* symbol = getPieceSymbol(piece);
-
-    if (ImGui::Button(symbol, size)) {
-        handleCellClick(x, y, const_cast<GameState&>(gameState), possibleMoves);
-    }
-
-    ImGui::PopStyleColor(3);
-    ImGui::PopID();
-
-    if (x < 7)
-        ImGui::SameLine();
-}
-
-static void renderBoardCells(GameState& gameState, ImVec2 size,
-                            const std::vector<std::pair<int, int>>& possibleMoves,
-                            ImU32 lightColor, ImU32 darkColor, ImU32 selectedColor, ImU32 moveColor) {
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            renderCell(x, y, gameState, size, possibleMoves, lightColor, darkColor, selectedColor, moveColor);
-        }
-    }
 }
 
 Renderer::Renderer() : m_cellSize(95.0f), m_boardOffset(0.f, 0.f),
@@ -142,28 +54,104 @@ void Renderer::render(GameState& gameState) {
     ImGui::SetNextWindowSize(ImVec2(800, 800), ImGuiCond_FirstUseEver);
     ImGui::Begin("Chess Game", nullptr, ImGuiWindowFlags_NoResize);
 
-    // Calculer la taille du plateau et des cases
+    // Obtenir la taille disponible de la fenêtre
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
     float boardSize = std::min(availableSize.x, availableSize.y - 100.0f);
     float cellSize = boardSize / 8.0f;
-    ImVec2 cellSizeVec{cellSize, cellSize};
-
-    // Récupérer les mouvements possibles
-    std::vector<std::pair<int, int>> possibleMoves = getPossibleMovesForSelection(gameState);
 
     // Enlever l'espacement entre les boutons
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
 
-    // Afficher le plateau
-    renderBoardCells(gameState, cellSizeVec, possibleMoves, m_lightCellColor, m_darkCellColor, m_selectedColor, m_possibleMoveColor);
+    renderBoard(gameState, cellSize);
 
     ImGui::PopStyleVar(2);
 
-    // Afficher le statut du jeu
     renderGameStatus(gameState);
 
     ImGui::End();
+}
+
+std::vector<std::pair<int, int>> Renderer::getPossibleMoves(GameState& gameState) const {
+    std::vector<std::pair<int, int>> moves;
+    if (gameState.isCellSelected()) {
+        auto [selRow, selCol] = gameState.getSelectedCell();
+        Piece* selectedPiece = gameState.getBoard().getPieceAt(selRow, selCol);
+        if (selectedPiece) {
+            moves = selectedPiece->getPossibleMoves(selRow, selCol, gameState.getBoard());
+        }
+    }
+    return moves;
+}
+
+ImU32 Renderer::getCellColor(bool isLight, bool isSelected, bool isPossibleMove) const {
+    if (isSelected) {
+        return m_selectedColor;
+    } else if (isPossibleMove) {
+        return m_possibleMoveColor;
+    }
+    return isLight ? m_lightCellColor : m_darkCellColor;
+}
+
+std::pair<ImVec4, ImVec4> Renderer::getHoverAndClickColors(ImVec4 baseVec) const {
+    ImVec4 hover = baseVec;
+    hover.x = (hover.x + 0.08f > 1.f) ? 1.f : hover.x + 0.08f;
+    hover.y = (hover.y + 0.08f > 1.f) ? 1.f : hover.y + 0.08f;
+    hover.z = (hover.z + 0.08f > 1.f) ? 1.f : hover.z + 0.08f;
+
+    ImVec4 click = baseVec;
+    click.x = (click.x - 0.08f < 0.f) ? 0.f : click.x - 0.08f;
+    click.y = (click.y - 0.08f < 0.f) ? 0.f : click.y - 0.08f;
+    click.z = (click.z - 0.08f < 0.f) ? 0.f : click.z - 0.08f;
+
+    return {hover, click};
+}
+
+void Renderer::renderCell(GameState& gameState, int x, int y, ImVec2 size, const std::vector<std::pair<int, int>>& possibleMoves) {
+    ImGui::PushID(y * 8 + x);
+
+    bool light = ((x + y) % 2 == 0);
+    bool isSelected = gameState.isCellSelected() && gameState.getSelectedCell() == std::make_pair(y, x);
+    bool isPossibleMove = std::find(possibleMoves.begin(), possibleMoves.end(), std::make_pair(y, x)) != possibleMoves.end();
+
+    ImU32 baseColor = getCellColor(light, isSelected, isPossibleMove);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetColorU32(baseColor));
+
+    ImVec4 baseVec = ImGui::ColorConvertU32ToFloat4(baseColor);
+    auto [hover, click] = getHoverAndClickColors(baseVec);
+
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, hover);
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, click);
+
+    const Piece* piece = gameState.getBoard().getPieceAt(y, x);
+    const char* symbol = getPieceSymbol(piece);
+
+    if (ImGui::Button(symbol, size)) {
+        if (isPossibleMove && gameState.isCellSelected()) {
+            auto [fromRow, fromCol] = gameState.getSelectedCell();
+            gameState.makeMove(fromRow, fromCol, y, x);
+            gameState.deselectCell();
+        } else {
+            gameState.selectCell(y, x);
+        }
+    }
+
+    ImGui::PopStyleColor(3);
+    ImGui::PopID();
+
+    if (x < 7)
+        ImGui::SameLine();
+}
+
+void Renderer::renderBoard(GameState& gameState, float cellSize) {
+    ImVec2 size{cellSize, cellSize};
+    std::vector<std::pair<int, int>> possibleMoves = getPossibleMoves(gameState);
+
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            renderCell(gameState, x, y, size, possibleMoves);
+        }
+    }
 }
 
 void Renderer::renderGameStatus(const GameState& gameState) {
