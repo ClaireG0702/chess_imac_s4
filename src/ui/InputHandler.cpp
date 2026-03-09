@@ -4,6 +4,12 @@
 InputHandler::InputHandler(GameState& gameState, Renderer& renderer) : m_gameState(gameState), m_renderer(renderer) {}
 
 void InputHandler::handleInput() {
+    // Handle right-click to deselect
+    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsWindowHovered()) {
+        m_gameState.deselectCell();
+        return;
+    }
+    
     handleMouseClick();
 }
 

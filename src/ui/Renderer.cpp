@@ -66,6 +66,8 @@ void Renderer::render(GameState& gameState) {
     renderBoard(gameState, cellSize);
 
     ImGui::PopStyleVar(2);
+    
+    renderPromotionModal(gameState);
 
     renderGameStatus(gameState);
 
@@ -147,7 +149,7 @@ void Renderer::renderBoard(GameState& gameState, float cellSize) {
     ImVec2 size{cellSize, cellSize};
     std::vector<std::pair<int, int>> possibleMoves = getPossibleMoves(gameState);
 
-    for (int y = 0; y < 8; ++y) {
+    for (int y = 7; y >= 0; --y) {
         for (int x = 0; x < 8; ++x) {
             renderCell(gameState, x, y, size, possibleMoves);
         }
@@ -175,6 +177,9 @@ void Renderer::renderGameStatus(const GameState& gameState) {
         case GameStatus::Stalemate:
             ImGui::Text("Pat! Match nul.");
             break;
+        case GameStatus::Victory:
+            ImGui::Text("Victoire! Le roi adverse a été capturé!");
+            break;
         default:
             break;
     }
@@ -195,4 +200,44 @@ std::pair<int, int> Renderer::getCellFromMousePosition(const ImVec2& mousePos) c
     int row = static_cast<int>(relativePos.y / m_cellSize);
 
     return {row, col};
+}
+
+void Renderer::renderPromotionModal(GameState& gameState) {
+    if (!gameState.isPromotionPending()) {
+        return;
+    }
+    
+    ImGui::OpenPopup("Pawn Promotion");
+    
+    if (ImGui::BeginPopupModal("Pawn Promotion", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Choisissez la pièce pour la promotion :");
+        ImGui::Spacing();
+        
+        auto [row, col] = gameState.getPromotionPosition();
+        
+        if (ImGui::Button("Dame##promote", ImVec2(120, 0))) {
+            gameState.promotePawn(row, col, PieceType::Queen);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Tour##promote", ImVec2(120, 0))) {
+            gameState.promotePawn(row, col, PieceType::Rook);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Fou##promote", ImVec2(120, 0))) {
+            gameState.promotePawn(row, col, PieceType::Bishop);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Cavalier##promote", ImVec2(120, 0))) {
+            gameState.promotePawn(row, col, PieceType::Knight);
+            ImGui::CloseCurrentPopup();
+        }
+        
+        ImGui::EndPopup();
+    }
 }

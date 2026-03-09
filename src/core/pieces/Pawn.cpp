@@ -6,7 +6,7 @@
 Pawn::Pawn(Color color) : Piece(color, PieceType::Pawn) {}
 
 bool Pawn::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const {
-    int direction = (m_color == Color::White) ? -1 : 1;
+    int direction = (m_color == Color::White) ? 1 : -1;
     int rowDiff = toRow - fromRow;
     int colDiff = std::abs(toCol - fromCol);
     
@@ -16,7 +16,7 @@ bool Pawn::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Boa
     }
     
     // Avancer de deux cases depuis la position initiale
-    int startRow = (m_color == Color::White) ? 6 : 1;
+    int startRow = (m_color == Color::White) ? 1 : 6;
     if (!m_hasMoved && colDiff == 0 && rowDiff == 2 * direction && 
         fromRow == startRow && board.isCellEmpty(toRow, toCol) &&
         board.isCellEmpty(fromRow + direction, fromCol)) {
@@ -36,7 +36,7 @@ bool Pawn::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Boa
 
 std::vector<std::pair<int, int>> Pawn::getPossibleMoves(int row, int col, const Board& board) const {
     std::vector<std::pair<int, int>> moves;
-    int direction = (m_color == Color::White) ? -1 : 1;
+    int direction = (m_color == Color::White) ? 1 : -1;
     
     // Avancer d'une case
     if (board.isValidPosition(row + direction, col) && 
@@ -44,7 +44,7 @@ std::vector<std::pair<int, int>> Pawn::getPossibleMoves(int row, int col, const 
         moves.push_back({row + direction, col});
         
         // Avancer de deux cases
-        int startRow = (m_color == Color::White) ? 6 : 1;
+        int startRow = (m_color == Color::White) ? 1 : 6;
         if (!m_hasMoved && row == startRow && 
             board.isCellEmpty(row + 2 * direction, col)) {
             moves.push_back({row + 2 * direction, col});

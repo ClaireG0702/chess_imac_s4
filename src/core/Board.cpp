@@ -21,31 +21,31 @@ void Board::clear() {
 void Board::initialize() {
     clear();
 
-    // Initialiaze white pieces
+    // Initialize white pieces (at bottom, indices 0-1)
     for(int col = 0; col < 8; ++col) {
-        board[6][col] = std::make_unique<Pawn>(Color::White);
+        board[1][col] = std::make_unique<Pawn>(Color::White);
     }
-    board[7][0] = std::make_unique<Rook>(Color::White);
-    board[7][1] = std::make_unique<Knight>(Color::White);
-    board[7][2] = std::make_unique<Bishop>(Color::White);
-    board[7][3] = std::make_unique<Queen>(Color::White);
-    board[7][4] = std::make_unique<King>(Color::White);
-    board[7][5] = std::make_unique<Bishop>(Color::White);
-    board[7][6] = std::make_unique<Knight>(Color::White);
-    board[7][7] = std::make_unique<Rook>(Color::White);
+    board[0][0] = std::make_unique<Rook>(Color::White);
+    board[0][1] = std::make_unique<Knight>(Color::White);
+    board[0][2] = std::make_unique<Bishop>(Color::White);
+    board[0][3] = std::make_unique<Queen>(Color::White);
+    board[0][4] = std::make_unique<King>(Color::White);
+    board[0][5] = std::make_unique<Bishop>(Color::White);
+    board[0][6] = std::make_unique<Knight>(Color::White);
+    board[0][7] = std::make_unique<Rook>(Color::White);
 
-    // Initialize black pieces
+    // Initialize black pieces (at top, indices 6-7)
     for(int col = 0; col < 8; ++col) {
-        board[1][col] = std::make_unique<Pawn>(Color::Black);
+        board[6][col] = std::make_unique<Pawn>(Color::Black);
     }
-    board[0][0] = std::make_unique<Rook>(Color::Black);
-    board[0][1] = std::make_unique<Knight>(Color::Black);
-    board[0][2] = std::make_unique<Bishop>(Color::Black);
-    board[0][3] = std::make_unique<Queen>(Color::Black);
-    board[0][4] = std::make_unique<King>(Color::Black);
-    board[0][5] = std::make_unique<Bishop>(Color::Black);
-    board[0][6] = std::make_unique<Knight>(Color::Black);
-    board[0][7] = std::make_unique<Rook>(Color::Black);
+    board[7][0] = std::make_unique<Rook>(Color::Black);
+    board[7][1] = std::make_unique<Knight>(Color::Black);
+    board[7][2] = std::make_unique<Bishop>(Color::Black);
+    board[7][3] = std::make_unique<Queen>(Color::Black);
+    board[7][4] = std::make_unique<King>(Color::Black);
+    board[7][5] = std::make_unique<Bishop>(Color::Black);
+    board[7][6] = std::make_unique<Knight>(Color::Black);
+    board[7][7] = std::make_unique<Rook>(Color::Black);
 }
 
 Piece *Board::getPieceAt(int row, int col) const {

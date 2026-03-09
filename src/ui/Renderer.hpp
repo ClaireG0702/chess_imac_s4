@@ -30,6 +30,7 @@ class Renderer {
         void renderGameStatus(const GameState& gameState);
         void renderBoard(GameState& gameState, float cellSize);
         void renderCell(GameState& gameState, int x, int y, ImVec2 size, const std::vector<std::pair<int, int>>& possibleMoves);
+        void renderPromotionModal(GameState& gameState);
         
         std::vector<std::pair<int, int>> getPossibleMoves(GameState& gameState) const;
         ImU32 getCellColor(bool isLight, bool isSelected, bool isPossibleMove) const;
