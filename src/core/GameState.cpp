@@ -65,6 +65,11 @@ bool GameState::makeMove(int fromRow, int fromCol, int toRow, int toCol) {
 }
 
 bool GameState::isValidMove(int fromRow, int fromCol, int toRow, int toCol) const {
+    // If game is over (Victory), no more moves allowed
+    if (m_status == GameStatus::Victory) {
+        return false;
+    }
+    
     if (!m_board.isValidPosition(fromRow, fromCol) || !m_board.isValidPosition(toRow, toCol)) {
         return false;
     }

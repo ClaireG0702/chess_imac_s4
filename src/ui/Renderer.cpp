@@ -177,9 +177,15 @@ void Renderer::renderGameStatus(const GameState& gameState) {
         case GameStatus::Stalemate:
             ImGui::Text("Pat! Match nul.");
             break;
-        case GameStatus::Victory:
-            ImGui::Text("Victoire! Le roi adverse a été capturé!");
+        case GameStatus::Victory: {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f)); // Green text
+            ImGui::TextUnformatted("========================================");
+            ImGui::Text("VICTOIRE! Le roi adverse a été capturé!");
+            ImGui::Text("La partie est terminée.");
+            ImGui::TextUnformatted("========================================");
+            ImGui::PopStyleColor();
             break;
+        }
         default:
             break;
     }

@@ -16,6 +16,11 @@ void InputHandler::handleInput() {
 void InputHandler::handleMouseClick() {
     if(!ImGui::IsMouseClicked(0)) return;
     if(!ImGui::IsWindowHovered()) return;
+    
+    // Don't allow any moves if game is over (Victory)
+    if (m_gameState.getStatus() == GameStatus::Victory) {
+        return;
+    }
 
     ImVec2 mousePos = ImGui::GetMousePos();
     auto [row, col] = m_renderer.getCellFromMousePosition(mousePos);
