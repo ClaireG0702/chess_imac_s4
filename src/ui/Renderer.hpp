@@ -1,6 +1,8 @@
 #pragma once
 #include "../core/GameState.hpp"
+#include "Renderer3D.hpp"
 #include <imgui.h>
+#include <memory>
 #include <vector>
 
 class Renderer {
@@ -26,11 +28,19 @@ class Renderer {
         ImU32 m_darkCellColor;
         ImU32 m_selectedColor;
         ImU32 m_possibleMoveColor;
+        
+        bool m_resetConfirmationRequested = false;
+        
+        // 3D renderer
+        std::unique_ptr<Renderer3D> m_renderer3D;
+        bool m_renderer3DInitialized = false;
 
-        void renderGameStatus(const GameState& gameState);
+        void renderGameStatus(GameState& gameState);
         void renderBoard(GameState& gameState, float cellSize);
         void renderCell(GameState& gameState, int x, int y, ImVec2 size, const std::vector<std::pair<int, int>>& possibleMoves);
         void renderPromotionModal(GameState& gameState);
+        void renderResetConfirmationModal(GameState& gameState);
+        void render3DView(GameState& gameState);
         
         std::vector<std::pair<int, int>> getPossibleMoves(GameState& gameState) const;
         ImU32 getCellColor(bool isLight, bool isSelected, bool isPossibleMove) const;

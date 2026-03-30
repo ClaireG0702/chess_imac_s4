@@ -43,6 +43,12 @@ Renderer::Renderer() : m_cellSize(95.0f), m_boardOffset(0.f, 0.f),
     m_possibleMoveColor(IM_COL32(0, 255, 0, 128)) {}
 
 bool Renderer::initialize() {
+    // Initialize 3D renderer
+    m_renderer3D = std::make_unique<Renderer3D>();
+    if (!m_renderer3D->initialize(600, 600)) {
+        return false;
+    }
+    m_renderer3DInitialized = true;
     return true;
 }
 
@@ -51,12 +57,23 @@ void Renderer::shutdown() {
 }
 
 void Renderer::render(GameState& gameState) {
-    ImGui::SetNextWindowSize(ImVec2(800, 800), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Chess Game", nullptr, ImGuiWindowFlags_NoResize);
+    // Render 3D view in left panel
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(650, 700), ImGuiCond_FirstUseEver);
+    ImGui::Begin("3D Chess View", nullptr);
+    
+    render3DView(gameState);
+    
+    ImGui::End();
+
+    // Render 2D controls in right panel
+    ImGui::SetNextWindowPos(ImVec2(650, 0), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(250, 700), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Controls", nullptr);
 
     // Obtenir la taille disponible de la fenêtre
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
-    float boardSize = std::min(availableSize.x, availableSize.y - 100.0f);
+    float boardSize = std::min(availableSize.x, availableSize.y - 150.0f);
     float cellSize = boardSize / 8.0f;
 
     // Enlever l'espacement entre les boutons
@@ -68,6 +85,7 @@ void Renderer::render(GameState& gameState) {
     ImGui::PopStyleVar(2);
     
     renderPromotionModal(gameState);
+    renderResetConfirmationModal(gameState);
 
     renderGameStatus(gameState);
 
@@ -156,7 +174,7 @@ void Renderer::renderBoard(GameState& gameState, float cellSize) {
     }
 }
 
-void Renderer::renderGameStatus(const GameState& gameState) {
+void Renderer::renderGameStatus(GameState& gameState) {
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
@@ -191,10 +209,7 @@ void Renderer::renderGameStatus(const GameState& gameState) {
     }
 
     if(ImGui::Button("Nouvelle partie")) {
-        // Reset the game state
-        // (This should ideally be handled by a method in GameState, but for simplicity we reinitialize it here)
-        GameState newGameState;
-        newGameState.initialize();
+        m_resetConfirmationRequested = true;
     }
 }
 
@@ -246,4 +261,59 @@ void Renderer::renderPromotionModal(GameState& gameState) {
         
         ImGui::EndPopup();
     }
+}
+
+void Renderer::renderResetConfirmationModal(GameState& gameState) {
+    if (m_resetConfirmationRequested) {
+        ImGui::OpenPopup("Confirmation de Réinitialisation");
+        m_resetConfirmationRequested = false;
+    }
+    
+    if (ImGui::BeginPopupModal("Confirmation de Réinitialisation", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Êtes-vous sûr de vouloir commencer une nouvelle partie?");
+        ImGui::Text("La partie en cours sera perdue.");
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+        
+        if (ImGui::Button("Oui, nouvelle partie##confirm", ImVec2(150, 0))) {
+            gameState.initialize();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        
+        if (ImGui::Button("Annuler##confirm", ImVec2(150, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        
+        ImGui::EndPopup();
+    }
+}
+
+void Renderer::render3DView(GameState& gameState) {
+    if (!m_renderer3DInitialized || !m_renderer3D) {
+        ImGui::Text("3D Renderer not initialized");
+        return;
+    }
+
+    // Render the 3D scene
+    m_renderer3D->render(gameState);
+
+    // Get the framebuffer texture and display it
+    GLuint fbTexture = m_renderer3D->getFramebufferTexture();
+    
+    ImVec2 availableSize = ImGui::GetContentRegionAvail();
+    ImVec2 displaySize(availableSize.x, availableSize.y);
+    
+    // Update 3D viewport if size changed
+    static ImVec2 lastSize(0, 0);
+    if (displaySize.x != lastSize.x || displaySize.y != lastSize.y) {
+        m_renderer3D->setViewportSize(static_cast<int>(displaySize.x), static_cast<int>(displaySize.y));
+        lastSize = displaySize;
+    }
+
+    // Display the framebuffer texture (ImGui uses texture ID as void*)
+    // Note: OpenGL texture coordinates are flipped vertically for ImGui
+    ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(fbTexture)), displaySize, 
+                 ImVec2(0, 1), ImVec2(1, 0));  // Flip UV vertically for correct display
 }

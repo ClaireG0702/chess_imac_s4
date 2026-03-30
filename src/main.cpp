@@ -1,8 +1,8 @@
+#include "ui/GLHeaders.hpp"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <imgui.h>
 #include <iostream>
-#include "GLFW/glfw3.h"
 #include "Game.hpp"
 
 int main() {
@@ -24,6 +24,14 @@ int main() {
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    // Load OpenGL function pointers with Glad
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cerr << "Failed to load OpenGL functions\n";
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
+    }
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -58,7 +66,8 @@ int main() {
         
         // Rendu
         ImGui::Render();
-        int display_w, display_h;
+        int display_w = 0;
+        int display_h = 0;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);

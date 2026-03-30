@@ -84,8 +84,12 @@ bool GameState::isValidMove(int fromRow, int fromCol, int toRow, int toCol) cons
 
 void GameState::selectCell(int row, int col) {
     if (m_board.isValidPosition(row, col)) {
-        m_selectedRow = row;
-        m_selectedCol = col;
+        // Only allow selecting a piece if it belongs to the current player
+        Piece* piece = m_board.getPieceAt(row, col);
+        if (piece && piece->getColor() == m_currentPlayer) {
+            m_selectedRow = row;
+            m_selectedCol = col;
+        }
     }
 }
 
