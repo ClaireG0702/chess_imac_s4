@@ -176,11 +176,11 @@ bool Renderer3D::createBoardGeometry()
         for (int col = 0; col < 8; ++col)
         {
             float x = boardStartX + col * squareSize;
-            float z = boardStartZ + row * squareSize;
+            float z = boardStartZ + (7 - row) * squareSize;
             float y = 0.0f;
 
             // Determine color: light (white-ish) or dark (blue-ish)
-            bool  isLight = (row + col) % 2 == 0;
+            bool  isLight = ((row + col) % 2) != 0;
             float r, g, b;
             if (isLight)
             {
@@ -618,7 +618,7 @@ void Renderer3D::drawPieces(const GameState& gameState)
                 continue;
 
             // Position cube at board position
-            glm::vec3 position(col + 0.5f, 0.5f, row + 0.5f);
+            glm::vec3 position(col + 0.5f, 0.5f, (7 - row) + 0.5f);
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
 
             GLint modelLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "modelMatrix");
