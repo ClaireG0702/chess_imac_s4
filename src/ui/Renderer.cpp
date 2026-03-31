@@ -42,10 +42,10 @@ Renderer::Renderer() : m_cellSize(95.0f), m_boardOffset(0.f, 0.f),
     m_selectedColor(IM_COL32(255, 255, 0, 128)), 
     m_possibleMoveColor(IM_COL32(0, 255, 0, 128)) {}
 
-bool Renderer::initialize() {
+bool Renderer::initialize(const std::string& executablePath) {
     // Initialize 3D renderer
     m_renderer3D = std::make_unique<Renderer3D>();
-    if (!m_renderer3D->initialize(600, 600)) {
+    if (!m_renderer3D->initialize(executablePath, 600, 600)) {
         return false;
     }
     m_renderer3DInitialized = true;

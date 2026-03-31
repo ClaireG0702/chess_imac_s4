@@ -5,7 +5,7 @@
 #include <iostream>
 #include "Game.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
     if(!glfwInit()) {
         std::cerr << "Failed to initialize GLFW\n";
         return -1;
@@ -47,7 +47,7 @@ int main() {
     
     // Initialisation du jeu
     Game game;
-    if (!game.initialize()) {
+    if (!game.initialize(argv[0])) {
         std::cerr << "Erreur lors de l'initialisation du jeu" << '\n';
         return -1;
     }

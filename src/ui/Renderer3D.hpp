@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <string>
 #include "Camera3D.hpp"
 #include "Skybox.hpp"
 #include "glimac/Program.hpp"
@@ -21,7 +22,7 @@ public:
     Renderer3D& operator=(Renderer3D&&) = delete;
 
     // Initialize 3D renderer (shaders, geometry, framebuffer)
-    bool initialize(int width, int height);
+    bool initialize(const std::string& executablePath, int width, int height);
 
     // Render the 3D chess scene to framebuffer
     void render(const GameState& gameState);
@@ -33,6 +34,9 @@ public:
     void setViewportSize(int width, int height);
 
 private:
+    // Executable path for asset loading
+    std::string m_executablePath;
+
     // Framebuffer objects
     GLuint m_framebuffer;
     GLuint m_framebufferTexture;

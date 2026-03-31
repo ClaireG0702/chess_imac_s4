@@ -9,7 +9,7 @@ class Game {
         Game();
         ~Game();
 
-        bool initialize();
+        bool initialize(const std::string& executablePath = "");
         void run();
         void shutdown();
 

@@ -15,7 +15,7 @@ class Renderer {
         Renderer& operator=(Renderer&&) = delete;
 
         void render(GameState& gameState);
-        bool initialize();
+        bool initialize(const std::string& executablePath = "");
         void shutdown();
 
         std::pair<int, int> getCellFromMousePosition(const ImVec2& mousePos) const;

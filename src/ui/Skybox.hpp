@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <string>
 #include "glimac/Program.hpp"
 
 class Skybox {
@@ -15,7 +16,7 @@ public:
     Skybox& operator=(Skybox&&) = delete;
 
     // Initialize skybox with procedural shader
-    bool initialize();
+    bool initialize(const std::string& executablePath = "");
 
     // Render the skybox
     void render(const glm::mat4& viewProjectionMatrix);

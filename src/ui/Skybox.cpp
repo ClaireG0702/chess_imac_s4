@@ -12,12 +12,12 @@ Skybox::~Skybox() {
     if (m_VBO != 0) glDeleteBuffers(1, &m_VBO);
 }
 
-bool Skybox::initialize() {
+bool Skybox::initialize(const std::string& executablePath) {
     try {
-        // Load shaders from files
-        // Path is relative to executable location (bin/Debug/)
-        glimac::FilePath skyboxVs("../../assets/shaders/skybox.vs.glsl");
-        glimac::FilePath skyboxFs("../../assets/shaders/skybox.fs.glsl");
+        // Load shaders using executable path
+        glimac::FilePath applicationPath(executablePath);
+        glimac::FilePath skyboxVs(applicationPath.dirPath() + "../../assets/shaders/skybox.vs.glsl");
+        glimac::FilePath skyboxFs(applicationPath.dirPath() + "../../assets/shaders/skybox.fs.glsl");
         
         m_program = std::make_unique<glimac::Program>(
             glimac::loadProgram(skyboxVs, skyboxFs)

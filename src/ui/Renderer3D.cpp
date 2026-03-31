@@ -30,7 +30,8 @@ Renderer3D::~Renderer3D() {
     if (m_depthRenderbuffer != 0) glDeleteRenderbuffers(1, &m_depthRenderbuffer);
 }
 
-bool Renderer3D::initialize(int width, int height) {
+bool Renderer3D::initialize(const std::string& executablePath, int width, int height) {
+    m_executablePath = executablePath;
     m_framebufferWidth = width;
     m_framebufferHeight = height;
     m_camera.setViewport(width, height);
@@ -57,7 +58,7 @@ bool Renderer3D::initialize(int width, int height) {
 
     // Initialize skybox
     m_skybox = std::make_unique<Skybox>();
-    if (!m_skybox->initialize()) {
+    if (!m_skybox->initialize(m_executablePath)) {
         std::cerr << "Failed to initialize skybox" << std::endl;
         return false;
     }
@@ -99,12 +100,17 @@ bool Renderer3D::createFramebuffer(int width, int height) {
 
 bool Renderer3D::createShaders() {
     try {
-        // Load shaders from files
-        // Path is relative to executable location (bin/Debug/)
-        glimac::FilePath boardVs("../../assets/shaders/board.vs.glsl");
-        glimac::FilePath boardFs("../../assets/shaders/board.fs.glsl");
-        glimac::FilePath pieceVs("../../assets/shaders/piece.vs.glsl");
-        glimac::FilePath pieceFs("../../assets/shaders/piece.fs.glsl");
+        // Load shaders using executable path, just like the example:
+        // glimac::FilePath applicationPath(argv[0]);
+        // glimac::Program program = loadProgram(
+        //     applicationPath.dirPath() + "TP4/shaders/3D.vs.glsl",
+        //     applicationPath.dirPath() + "TP4/shaders/tex3D.fs.glsl"
+        // );
+        glimac::FilePath applicationPath(m_executablePath);
+        glimac::FilePath boardVs(applicationPath.dirPath() + "../../assets/shaders/board.vs.glsl");
+        glimac::FilePath boardFs(applicationPath.dirPath() + "../../assets/shaders/board.fs.glsl");
+        glimac::FilePath pieceVs(applicationPath.dirPath() + "../../assets/shaders/piece.vs.glsl");
+        glimac::FilePath pieceFs(applicationPath.dirPath() + "../../assets/shaders/piece.fs.glsl");
         
         m_boardProgram = std::make_unique<glimac::Program>(
             glimac::loadProgram(boardVs, boardFs)
