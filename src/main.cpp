@@ -1,7 +1,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <imgui.h>
-#include <windows.h>
+// #include <windows.h>
 #include <iostream>
 #include "Game.hpp"
 #include "ui/GLHeaders.hpp"
@@ -41,9 +41,9 @@ int main(int argc, char* argv[])
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    char buffer[MAX_PATH];
-    GetCurrentDirectoryA(MAX_PATH, buffer);
-    std::cout << "Current working directory: " << buffer << std::endl;
+    // char buffer[MAX_PATH];
+    // GetCurrentDirectoryA(MAX_PATH, buffer);
+    // std::cout << "Current working directory: " << buffer << std::endl;
 
     ImGuiIO&             io             = ImGui::GetIO();
     static const ImWchar chess_ranges[] = {0x0020, 0x00FF, 0x2654, 0x265F, 0}; // ASCII + pièces d'échecs
