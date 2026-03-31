@@ -1,12 +1,15 @@
-#include "ui/GLHeaders.hpp"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 #include <imgui.h>
+#include <windows.h>
 #include <iostream>
 #include "Game.hpp"
+#include "ui/GLHeaders.hpp"
 
-int main(int argc, char* argv[]) {
-    if(!glfwInit()) {
+int main(int argc, char* argv[])
+{
+    if (!glfwInit())
+    {
         std::cerr << "Failed to initialize GLFW\n";
         return -1;
     }
@@ -16,7 +19,8 @@ int main(int argc, char* argv[]) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window = glfwCreateWindow(800, 800, "Chess", nullptr, nullptr);
-    if (!window) {
+    if (!window)
+    {
         std::cerr << "Failed to create GLFW window\n";
         glfwTerminate();
         return -1;
@@ -26,7 +30,8 @@ int main(int argc, char* argv[]) {
     glfwSwapInterval(1);
 
     // Load OpenGL function pointers with Glad
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
         std::cerr << "Failed to load OpenGL functions\n";
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -35,35 +40,49 @@ int main(int argc, char* argv[]) {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
+
+    char buffer[MAX_PATH];
+    GetCurrentDirectoryA(MAX_PATH, buffer);
+    std::cout << "Current working directory: " << buffer << std::endl;
+
+    ImGuiIO&             io             = ImGui::GetIO();
+    static const ImWchar chess_ranges[] = {0x0020, 0x00FF, 0x2654, 0x265F, 0}; // ASCII + pièces d'échecs
+    ImFontConfig         config;
+    ImFont*              font = io.Fonts->AddFontFromFileTTF("../../assets/fonts/segoe-ui-symbol.ttf", 32.0f, &config, chess_ranges);
+    if (!font)
+    {
+        std::cerr << "Erreur : Impossible de charger la police segoe-ui-symbol.ttf" << std::endl;
+    }
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    
+
     // Style ImGui
     ImGui::StyleColorsDark();
-    
+
     // Initialisation des backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-    
+
     // Initialisation du jeu
     Game game;
-    if (!game.initialize(argv[0])) {
+    if (!game.initialize(argv[0]))
+    {
         std::cerr << "Erreur lors de l'initialisation du jeu" << '\n';
         return -1;
     }
-    
+
     // Boucle principale
-    while (!glfwWindowShouldClose(window)) {
+    while (!glfwWindowShouldClose(window))
+    {
         glfwPollEvents();
-        
+
         // Démarrer la frame ImGui
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        
+
         // Mettre à jour et afficher le jeu
         game.run();
-        
+
         // Rendu
         ImGui::Render();
         int display_w = 0;
@@ -73,19 +92,19 @@ int main(int argc, char* argv[]) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        
+
         glfwSwapBuffers(window);
     }
-    
+
     // Nettoyage
     game.shutdown();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    
+
     glfwDestroyWindow(window);
     glfwTerminate();
-    
+
     return 0;
 }
 
@@ -95,8 +114,8 @@ int main(int argc, char* argv[]) {
 //         "Chess",
 //         {
 //             .init = [&]() {},
-//             .loop = [&]() { 
-                
+//             .loop = [&]() {
+
 //                 Game game;
 //                 game.init();
 //                 game.render();
