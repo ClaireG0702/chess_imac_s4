@@ -8,7 +8,11 @@
 #include "glimac/FilePath.hpp"
 
 Renderer3D::Renderer3D()
-    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0)
+    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800),
+      m_cameraMode(CameraMode::Trackball),
+      m_trackballCamera(15.0f, 0.0f, 30.0f),
+      m_freeflyCamera(glm::vec3(3.5f, 5.0f, 8.0f)),
+      m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0)
 {
 }
 
@@ -43,7 +47,6 @@ bool Renderer3D::initialize(const std::string& executablePath, int width, int he
     m_executablePath    = executablePath;
     m_framebufferWidth  = width;
     m_framebufferHeight = height;
-    m_camera.setViewport(width, height);
 
     if (!createFramebuffer(width, height))
     {
@@ -564,7 +567,7 @@ void Renderer3D::render(const GameState& gameState)
     glEnable(GL_DEPTH_TEST);
 
     // Get view-projection matrix from camera
-    glm::mat4 viewProj = m_camera.getViewProjectionMatrix();
+    glm::mat4 viewProj = getViewProjectionMatrix();
 
     // Render skybox
     m_skybox->render(viewProj);
@@ -589,7 +592,7 @@ void Renderer3D::drawBoard(const GameState& gameState)
 {
     m_boardProgram->use();
 
-    glm::mat4 viewProj = m_camera.getViewProjectionMatrix();
+    glm::mat4 viewProj = getViewProjectionMatrix();
     GLint     vpLoc    = glGetUniformLocation(m_boardProgram->getGLId(), "viewProjectionMatrix");
     glUniformMatrix4fv(vpLoc, 1, GL_FALSE, &viewProj[0][0]);
 
@@ -602,7 +605,7 @@ void Renderer3D::drawPieces(const GameState& gameState)
 {
     m_pieceProgram->use();
 
-    glm::mat4 viewProj = m_camera.getViewProjectionMatrix();
+    glm::mat4 viewProj = getViewProjectionMatrix();
     GLint     vpLoc    = glGetUniformLocation(m_pieceProgram->getGLId(), "viewProjectionMatrix");
     glUniformMatrix4fv(vpLoc, 1, GL_FALSE, &viewProj[0][0]);
 
@@ -663,7 +666,6 @@ void Renderer3D::setViewportSize(int width, int height)
     {
         m_framebufferWidth  = width;
         m_framebufferHeight = height;
-        m_camera.setViewport(width, height);
 
         // Recreate framebuffer with new size
         if (m_framebuffer != 0)
@@ -675,4 +677,67 @@ void Renderer3D::setViewportSize(int width, int height)
 
         createFramebuffer(width, height);
     }
+}
+
+glm::mat4 Renderer3D::getViewProjectionMatrix() const
+{
+    glm::mat4 view, proj;
+    float aspect = static_cast<float>(m_framebufferWidth) / static_cast<float>(m_framebufferHeight);
+    
+    if (m_cameraMode == CameraMode::Trackball) {
+        view = m_trackballCamera.getViewMatrix();
+        // Center the trackball camera around the board center (4, 4, 0) instead of origin
+        glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
+        view = view * glm::translate(glm::mat4(1.0f), -boardCenter);
+    } else {
+        view = m_freeflyCamera.getViewMatrix();
+    }
+    
+    proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 200.0f);
+    return proj * view;
+}
+
+void Renderer3D::setCameraMode(CameraMode mode)
+{
+    m_cameraMode = mode;
+}
+
+void Renderer3D::rotateTrackballLeft(float degrees)
+{
+    m_trackballCamera.rotateLeft(degrees);
+}
+
+void Renderer3D::rotateTrackballUp(float degrees)
+{
+    m_trackballCamera.rotateUp(degrees);
+}
+
+void Renderer3D::zoomTrackball(float delta)
+{
+    m_trackballCamera.moveFront(delta);
+}
+
+void Renderer3D::moveFreeflyFront(float t)
+{
+    m_freeflyCamera.moveFront(t);
+}
+
+void Renderer3D::moveFreeflyLeft(float t)
+{
+    m_freeflyCamera.moveLeft(t);
+}
+
+void Renderer3D::moveFreeflyUp(float t)
+{
+    m_freeflyCamera.moveUp(t);
+}
+
+void Renderer3D::rotateFreeflyLeft(float degrees)
+{
+    m_freeflyCamera.rotateLeft(degrees);
+}
+
+void Renderer3D::rotateFreeflyUp(float degrees)
+{
+    m_freeflyCamera.rotateUp(degrees);
 }

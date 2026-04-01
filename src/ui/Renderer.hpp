@@ -19,6 +19,9 @@ class Renderer {
         void shutdown();
 
         std::pair<int, int> getCellFromMousePosition(const ImVec2& mousePos) const;
+        
+        // Access to 3D renderer for camera control
+        Renderer3D* getRenderer3D() { return m_renderer3D.get(); }
 
     private:
         float m_cellSize;

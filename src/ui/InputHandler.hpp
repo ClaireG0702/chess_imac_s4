@@ -13,5 +13,5 @@ class InputHandler {
         Renderer& m_renderer;
         
         void handleMouseClick();
-
+        void handleCameraInput();
 };

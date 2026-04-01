@@ -67,7 +67,7 @@ void Renderer::render(GameState& gameState)
     // Render 3D view in left panel
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(650, 700), ImGuiCond_FirstUseEver);
-    ImGui::Begin("3D Chess View", nullptr);
+    ImGui::Begin("3D Chess View", nullptr, ImGuiWindowFlags_NoMove);
 
     render3DView(gameState);
 
@@ -76,7 +76,7 @@ void Renderer::render(GameState& gameState)
     // Render 2D controls in right panel
     ImGui::SetNextWindowPos(ImVec2(650, 0), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(250, 700), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Controls", nullptr);
+    ImGui::Begin("Controls", nullptr, ImGuiWindowFlags_NoMove);
 
     // Obtenir la taille disponible de la fenêtre
     ImVec2 availableSize = ImGui::GetContentRegionAvail();
