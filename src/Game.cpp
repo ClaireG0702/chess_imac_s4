@@ -1,7 +1,8 @@
 #include "Game.hpp"
 #include <iostream>
+#include <imgui.h>
 
-Game::Game() : m_isRunning(false) {}
+Game::Game() : m_isRunning(false), m_gameStarted(false) {}
 
 Game::~Game() {
     shutdown();
@@ -22,8 +23,12 @@ bool Game::initialize(const std::string& executablePath) {
 }
 
 void Game::run() {
-    update();
-    render();
+    if (!m_gameStarted) {
+        showStartMenu();
+    } else {
+        update();
+        render();
+    }
 }
 
 void Game::update() {
@@ -32,6 +37,36 @@ void Game::update() {
 
 void Game::render() {
     m_renderer->render(*m_gameState);
+}
+
+void Game::showStartMenu() {
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f - 200, ImGui::GetIO().DisplaySize.y * 0.5f - 150));
+    ImGui::SetNextWindowSize(ImVec2(400, 300));
+    ImGui::Begin("Mode de Jeu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+
+    ImGui::TextUnformatted("Bienvenue au Jeu d'Echecs!");
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Choisissez le mode de jeu:");
+    ImGui::Spacing();
+
+    if (ImGui::Button("Mode Classique", ImVec2(350, 50))) {
+        m_gameState->setGameMode(GameMode::Classic);
+        m_gameState->initialize();
+        m_gameStarted = true;
+    }
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Mode Chaotique", ImVec2(350, 50))) {
+        m_gameState->setGameMode(GameMode::Chaotic);
+        m_gameState->initialize();
+        m_gameStarted = true;
+    }
+
+    ImGui::End();
 }
 
 void Game::shutdown() {

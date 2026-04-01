@@ -19,7 +19,9 @@ class Game {
         std::unique_ptr<InputHandler> m_inputHandler;
 
         bool m_isRunning;
+        bool m_gameStarted;
 
         void update();
         void render();
+        void showStartMenu();
 };

@@ -11,11 +11,18 @@ enum class GameStatus : std::uint8_t {
     Victory
 };
 
+enum class GameMode : std::uint8_t {
+    Classic,
+    Chaotic
+};
+
 class GameState {
     public:
         GameState();
 
         void initialize();
+        void setGameMode(GameMode mode) { m_gameMode = mode; }
+        GameMode getGameMode() const { return m_gameMode; }
         bool makeMove(int fromRow, int fromCol, int toRow, int toCol);
         bool isValidMove(int fromRow, int fromCol, int toRow, int toCol) const;
 
@@ -37,6 +44,7 @@ class GameState {
         Board m_board;
         Color m_currentPlayer;
         GameStatus m_status;
+        GameMode m_gameMode;
         int m_selectedRow;
         int m_selectedCol;
         bool m_promotionPending;

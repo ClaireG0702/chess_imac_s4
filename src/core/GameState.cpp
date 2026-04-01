@@ -7,7 +7,7 @@
 #include "pieces/Bishop.hpp"
 #include "pieces/Knight.hpp"
 
-GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_selectedRow(-1), m_selectedCol(-1), m_promotionPending(false), m_promotionRow(-1), m_promotionCol(-1) {
+GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_gameMode(GameMode::Classic), m_selectedRow(-1), m_selectedCol(-1), m_promotionPending(false), m_promotionRow(-1), m_promotionCol(-1) {
     m_board.initialize();
 }
 
