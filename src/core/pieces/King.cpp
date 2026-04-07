@@ -42,3 +42,8 @@ std::vector<std::pair<int, int>> King::getPossibleMoves(int row, int col, const 
     
     return moves;
 }
+std::unique_ptr<Piece> King::clone() const {
+    auto cloned = std::make_unique<King>(m_color);
+    cloned->m_hasMoved = m_hasMoved;
+    return cloned;
+}

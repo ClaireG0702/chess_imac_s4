@@ -44,6 +44,7 @@ class Renderer {
         void renderPromotionModal(GameState& gameState);
         void renderResetConfirmationModal(GameState& gameState);
         void render3DView(GameState& gameState);
+        void renderEventHistory(GameState& gameState);
         
         std::vector<std::pair<int, int>> getPossibleMoves(GameState& gameState) const;
         ImU32 getCellColor(bool isLight, bool isSelected, bool isPossibleMove) const;

@@ -47,3 +47,8 @@ std::vector<std::pair<int, int>> Rook::getPossibleMoves(int row, int col, const 
     
     return moves;
 }
+std::unique_ptr<Piece> Rook::clone() const {
+    auto cloned = std::make_unique<Rook>(m_color);
+    cloned->m_hasMoved = m_hasMoved;
+    return cloned;
+}

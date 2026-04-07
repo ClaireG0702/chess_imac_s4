@@ -5,6 +5,15 @@
 #include "pieces/Bishop.hpp"
 #include "pieces/Queen.hpp"
 #include "pieces/King.hpp"
+#include <random>
+#include <algorithm>
+#include <cmath>
+
+// Probability constants for piece characteristics
+constexpr double AUTISM_PROBABILITY = 0.0105;           // 1.05%
+constexpr double ADHD_PROBABILITY = 0.05;               // 5%
+constexpr double DYSCALCULIA_PROBABILITY = 0.0295;      // 2.95%
+constexpr double GENDERFLUID_PROBABILITY = 0.0145;      // 1.45%
 
 Board::Board() {
     initialize();
@@ -22,7 +31,7 @@ void Board::initialize() {
     clear();
 
     // Initialize white pieces (at bottom, indices 0-1)
-    for(int col = 0; col < 8; ++col) {
+    for(int col = 0; col < BOARD_SIZE; ++col) {
         board[1][col] = std::make_unique<Pawn>(Color::White);
     }
     board[0][0] = std::make_unique<Rook>(Color::White);
@@ -35,7 +44,7 @@ void Board::initialize() {
     board[0][7] = std::make_unique<Rook>(Color::White);
 
     // Initialize black pieces (at top, indices 6-7)
-    for(int col = 0; col < 8; ++col) {
+    for(int col = 0; col < BOARD_SIZE; ++col) {
         board[6][col] = std::make_unique<Pawn>(Color::Black);
     }
     board[7][0] = std::make_unique<Rook>(Color::Black);
@@ -46,6 +55,29 @@ void Board::initialize() {
     board[7][5] = std::make_unique<Bishop>(Color::Black);
     board[7][6] = std::make_unique<Knight>(Color::Black);
     board[7][7] = std::make_unique<Rook>(Color::Black);
+
+    // Assign characteristics to pieces based on percentages
+    assignCharacteristicsToBoard();
+}
+
+void Board::assignCharacteristicsToBoard() {
+    std::vector<std::pair<int, int>> piecesWithoutKings = getAllPiecesExceptKings();
+
+    int totalPieces = piecesWithoutKings.size();
+
+    // Calculate number of pieces to assign for each characteristic
+    int autismCount = std::round(totalPieces * AUTISM_PROBABILITY);
+    int adhdCount = std::round(totalPieces * ADHD_PROBABILITY);
+    int dyscalculiaCount = std::round(totalPieces * DYSCALCULIA_PROBABILITY);
+    int genderfluidCount = std::round(totalPieces * GENDERFLUID_PROBABILITY);
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    assignCharacteristic(piecesWithoutKings, PieceCharacteristic::Autism, autismCount, gen);
+    assignCharacteristic(piecesWithoutKings, PieceCharacteristic::ADHD, adhdCount, gen);
+    assignCharacteristic(piecesWithoutKings, PieceCharacteristic::Dyscalculia, dyscalculiaCount, gen);
+    assignCharacteristic(piecesWithoutKings, PieceCharacteristic::Genderfluid, genderfluidCount, gen);
 }
 
 Piece *Board::getPieceAt(int row, int col) const {
@@ -82,5 +114,32 @@ bool Board::isCellEmpty(int row, int col) const {
 }
 
 bool Board::isValidPosition(int row, int col) const {
-    return row >= 0 && row < 8 && col >= 0 && col < 8;
+    return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
+}
+
+std::vector<std::pair<int, int>> Board::getAllPiecesExceptKings() const {
+    std::vector<std::pair<int, int>> pieces;
+    for (int row = 0; row < BOARD_SIZE; ++row) {
+        for (int col = 0; col < BOARD_SIZE; ++col) {
+            Piece* piece = getPieceAt(row, col);
+            // Skip empty squares and kings
+            if (piece && piece->getType() != PieceType::King) {
+                pieces.push_back({row, col});
+            }
+        }
+    }
+    return pieces;
+}
+
+void Board::assignCharacteristic(const std::vector<std::pair<int, int>>& pieces,
+                               PieceCharacteristic characteristic,
+                               int count,
+                               std::mt19937& gen) {
+    std::vector<std::pair<int, int>> shuffledPieces = pieces;
+    std::shuffle(shuffledPieces.begin(), shuffledPieces.end(), gen);
+    
+    for (int i = 0; i < count && i < static_cast<int>(shuffledPieces.size()); ++i) {
+        auto [row, col] = shuffledPieces[i];
+        board[row][col]->addCharacteristic(characteristic);
+    }
 }

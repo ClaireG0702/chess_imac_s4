@@ -65,3 +65,9 @@ std::vector<std::pair<int, int>> Pawn::getPossibleMoves(int row, int col, const 
     
     return moves;
 }
+
+std::unique_ptr<Piece> Pawn::clone() const {
+    auto cloned = std::make_unique<Pawn>(m_color);
+    cloned->m_hasMoved = m_hasMoved;
+    return cloned;
+}

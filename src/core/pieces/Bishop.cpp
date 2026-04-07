@@ -52,3 +52,8 @@ std::vector<std::pair<int, int>> Bishop::getPossibleMoves(int row, int col, cons
     
     return moves;
 }
+std::unique_ptr<Piece> Bishop::clone() const {
+    auto cloned = std::make_unique<Bishop>(m_color);
+    cloned->m_hasMoved = m_hasMoved;
+    return cloned;
+}

@@ -43,3 +43,8 @@ std::vector<std::pair<int, int>> Knight::getPossibleMoves(int row, int col, cons
     
     return moves;
 }
+std::unique_ptr<Piece> Knight::clone() const {
+    auto cloned = std::make_unique<Knight>(m_color);
+    cloned->m_hasMoved = m_hasMoved;
+    return cloned;
+}

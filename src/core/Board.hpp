@@ -2,6 +2,10 @@
 #include "Piece.hpp"
 #include <array>
 #include <memory>
+#include <vector>
+#include <random>
+
+constexpr int BOARD_SIZE = 8;
 
 class Board {
     public:
@@ -21,5 +25,12 @@ class Board {
         void clear();
 
     private:
-        std::array<std::array<std::unique_ptr<Piece>, 8>, 8> board; // 8x8 grid of pointers to pieces (nullptr if no piece on the square)
+        std::array<std::array<std::unique_ptr<Piece>, BOARD_SIZE>, BOARD_SIZE> board; // Board grid of pointers to pieces
+        
+        void assignCharacteristicsToBoard();
+        std::vector<std::pair<int, int>> getAllPiecesExceptKings() const;
+        void assignCharacteristic(const std::vector<std::pair<int, int>>& pieces, 
+                                 PieceCharacteristic characteristic, 
+                                 int count, 
+                                 std::mt19937& gen);
 };

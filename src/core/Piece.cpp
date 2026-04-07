@@ -2,7 +2,9 @@
 #include "Board.hpp"
 #include <iostream>
 
-Piece::Piece(Color color, PieceType type) : m_color(color), m_type(type), m_hasMoved(false) {}
+Piece::Piece(Color color, PieceType type) : m_color(color), m_type(type), m_characteristics(0), m_hasMoved(false) {}
+
+Piece::Piece(Color color, PieceType type, std::uint8_t characteristics) : m_color(color), m_type(type), m_characteristics(characteristics), m_hasMoved(false) {}
 
 bool Piece::isPathClear(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const {
     int rowDir = 0;
