@@ -89,4 +89,6 @@ private:
     void      drawPieces(const GameState& gameState);
     void      drawSelectedHighlight(const GameState& gameState);
     void      drawPossibleMovesHighlight(const GameState& gameState);
+
+    bool m_daltonismMode = false;
 };

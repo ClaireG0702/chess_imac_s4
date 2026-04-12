@@ -372,48 +372,50 @@ void Renderer::render3DView(GameState& gameState)
 
 void Renderer::renderEventHistory(GameState& gameState)
 {
-    if (gameState.getGameMode() != GameMode::Chaotic) {
-        return;  // Only show history in chaotic mode
+    if (gameState.getGameMode() != GameMode::Chaotic)
+    {
+        return; // Only show history in chaotic mode
     }
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Text("Historique des événements:");
-    
+
     // Use a child window for scrollable event list
     ImVec2 childSize = ImGui::GetContentRegionAvail();
-    childSize.y = std::max(80.0f, childSize.y - 20.0f);
-    
+    childSize.y      = std::max(80.0f, childSize.y - 20.0f);
+
     ImGui::BeginChild("EventHistory", childSize, true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    
+
     const auto& eventHistory = gameState.getEventHistory();
-    
-    if (eventHistory.empty()) {
+
+    if (eventHistory.empty())
+    {
         ImGui::TextDisabled("Aucun événement pour le moment...");
-    } else {
+    }
+    else
+    {
         // Display events in reverse order (newest first)
-        for (int i = static_cast<int>(eventHistory.size()) - 1; i >= 0; --i) {
+        for (int i = static_cast<int>(eventHistory.size()) - 1; i >= 0; --i)
+        {
             const auto& event = eventHistory[i];
-            
+
             // Color based on player
-            ImVec4 playerColor = (event.player == Color::White) 
-                ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)   // White
-                : ImVec4(0.3f, 0.3f, 0.3f, 1.0f);  // Dark
-            
+            ImVec4 playerColor = (event.player == Color::White)
+                                     ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)  // White
+                                     : ImVec4(0.3f, 0.3f, 0.3f, 1.0f); // Dark
+
             ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
-            ImGui::Text("[Tour %d] %s (%s)", 
-                event.turnNumber,
-                event.eventName.c_str(),
-                event.player == Color::White ? "Blanc" : "Noir"
-            );
+            ImGui::Text("[Tour %d] %s (%s)", event.turnNumber, event.eventName.c_str(), event.player == Color::White ? "Blanc" : "Noir");
             ImGui::PopStyleColor();
         }
     }
-    
+
     // Auto-scroll to bottom if new events
-    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
+    if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
+    {
         ImGui::SetScrollHereY(1.0f);
     }
-    
+
     ImGui::EndChild();
 }

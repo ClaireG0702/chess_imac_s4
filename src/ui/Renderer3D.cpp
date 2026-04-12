@@ -624,14 +624,21 @@ void Renderer3D::drawPieces(const GameState& gameState)
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMatrix[0][0]);
 
             // Set piece color based on player
+            // Set piece color based on player and daltonism mode
             glm::vec3 pieceColor;
-            if (piece->getColor() == Color::White)
+            if (m_daltonismMode)
             {
-                pieceColor = glm::vec3(1.0f, 1.0f, 1.0f); // White
+                // Couleurs daltonisme (exemple : orange et bleu)
+                pieceColor = (piece->getColor() == Color::White)
+                                 ? glm::vec3(1.0f, 0.5f, 0.0f)  // Orange
+                                 : glm::vec3(0.0f, 0.5f, 1.0f); // Bleu
             }
             else
             {
-                pieceColor = glm::vec3(0.2f, 0.2f, 0.2f); // Black
+                // Couleurs normales
+                pieceColor = (piece->getColor() == Color::White)
+                                 ? glm::vec3(1.0f, 1.0f, 1.0f)
+                                 : glm::vec3(0.2f, 0.2f, 0.2f);
             }
 
             GLint colorLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "pieceColor");

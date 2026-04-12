@@ -1,19 +1,23 @@
 #include "Game.hpp"
-#include <iostream>
 #include <imgui.h>
+#include <iostream>
+
 
 Game::Game() : m_isRunning(false), m_gameStarted(false) {}
 
-Game::~Game() {
+Game::~Game()
+{
     shutdown();
 }
 
-bool Game::initialize(const std::string& executablePath) {
-    m_gameState = std::make_unique<GameState>();
-    m_renderer = std::make_unique<Renderer>();
+bool Game::initialize(const std::string& executablePath)
+{
+    m_gameState    = std::make_unique<GameState>();
+    m_renderer     = std::make_unique<Renderer>();
     m_inputHandler = std::make_unique<InputHandler>(*m_gameState, *m_renderer);
 
-    if (!m_renderer->initialize(executablePath)) {
+    if (!m_renderer->initialize(executablePath))
+    {
         std::cerr << "Failed to initialize renderer\n";
         return false;
     }
@@ -22,24 +26,31 @@ bool Game::initialize(const std::string& executablePath) {
     return true;
 }
 
-void Game::run() {
-    if (!m_gameStarted) {
+void Game::run()
+{
+    if (!m_gameStarted)
+    {
         showStartMenu();
-    } else {
+    }
+    else
+    {
         update();
         render();
     }
 }
 
-void Game::update() {
+void Game::update()
+{
     m_inputHandler->handleInput();
 }
 
-void Game::render() {
+void Game::render()
+{
     m_renderer->render(*m_gameState);
 }
 
-void Game::showStartMenu() {
+void Game::showStartMenu()
+{
     ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x * 0.5f - 200, ImGui::GetIO().DisplaySize.y * 0.5f - 150));
     ImGui::SetNextWindowSize(ImVec2(400, 300));
     ImGui::Begin("Mode de Jeu", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
@@ -52,7 +63,8 @@ void Game::showStartMenu() {
     ImGui::Text("Choisissez le mode de jeu:");
     ImGui::Spacing();
 
-    if (ImGui::Button("Mode Classique", ImVec2(350, 50))) {
+    if (ImGui::Button("Mode Classique", ImVec2(350, 50)))
+    {
         m_gameState->setGameMode(GameMode::Classic);
         m_gameState->initialize();
         m_gameStarted = true;
@@ -60,7 +72,8 @@ void Game::showStartMenu() {
 
     ImGui::Spacing();
 
-    if (ImGui::Button("Mode Chaotique", ImVec2(350, 50))) {
+    if (ImGui::Button("Mode Chaotique", ImVec2(350, 50)))
+    {
         m_gameState->setGameMode(GameMode::Chaotic);
         m_gameState->initialize();
         m_gameStarted = true;
@@ -69,8 +82,10 @@ void Game::showStartMenu() {
     ImGui::End();
 }
 
-void Game::shutdown() {
-    if (m_renderer) {
+void Game::shutdown()
+{
+    if (m_renderer)
+    {
         m_renderer->shutdown();
     }
     m_renderer = nullptr;
