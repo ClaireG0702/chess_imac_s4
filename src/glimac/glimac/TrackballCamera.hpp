@@ -26,6 +26,12 @@ class TrackballCamera {
 
         void rotateUp(float degrees) {
             m_fAngleY += degrees;
+            // Clamp angle to prevent camera from going below the board
+            // Limit vertical angle to prevent viewing from below the board plane
+            const float MIN_ANGLE_Y = 10.0f;   // Keep camera above the board level
+            const float MAX_ANGLE_Y = 85.0f;   // Up to nearly vertical
+            if (m_fAngleY > MAX_ANGLE_Y) m_fAngleY = MAX_ANGLE_Y;
+            if (m_fAngleY < MIN_ANGLE_Y) m_fAngleY = MIN_ANGLE_Y;
         }
 
         const glm::mat4 getViewMatrix() const {

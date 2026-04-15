@@ -6,13 +6,16 @@
 #include <vector>
 #include "Skybox.hpp"
 #include "PieceModel.hpp"
+#include "PieceAnimation.hpp"
 #include "glimac/glimac/Program.hpp"
 #include "glimac/glimac/TrackballCamera.hpp"
+#include "glimac/glimac/PieceCamera.hpp"
 
 class GameState;
 
 enum class CameraMode {
-    Trackball
+    Trackball,
+    Piece
 };
 
 class Renderer3D {
@@ -46,6 +49,14 @@ public:
     void rotateTrackballUp(float degrees);
     void zoomTrackball(float delta);
 
+    // Piece camera controls
+    void rotatePieceLeft(float degrees);
+    void rotatePieceUp(float degrees);
+
+    // Animation controls
+    void animatePieceMovement(int fromRow, int fromCol, int toRow, int toCol, float duration = 0.5f);
+    void updateAnimation();
+
 private:
     // Executable path for asset loading
     std::string m_executablePath;
@@ -60,6 +71,10 @@ private:
     // Camera management
     CameraMode              m_cameraMode;
     glimac::TrackballCamera m_trackballCamera;
+    glimac::PieceCamera     m_pieceCamera;
+
+    // Piece movement animation
+    PieceAnimationManager m_pieceAnimationManager;
 
     // Skybox
     std::unique_ptr<Skybox> m_skybox;
