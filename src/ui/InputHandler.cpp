@@ -31,7 +31,11 @@ void InputHandler::handleCameraInput()
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_2))
     {
-        // TODO: Implement mouse input handling
+        // Switch to piece camera (only if a cell is selected)
+        if (m_gameState.isCellSelected())
+        {
+            renderer3D->setCameraMode(CameraMode::Piece);
+        }
     }
 
     // Contrôles trackball avec la souris (clic droit glissé)
@@ -50,31 +54,68 @@ void InputHandler::handleCameraInput()
             }
             ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
         }
-    }
 
-    // Contrôles trackball (flèches)
-    if (ImGui::IsKeyDown(ImGuiKey_LeftArrow))
-    {
-        renderer3D->rotateTrackballLeft(2.0f);
-    }
-    if (ImGui::IsKeyDown(ImGuiKey_RightArrow))
-    {
-        renderer3D->rotateTrackballLeft(-2.0f);
-    }
-    if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
-    {
-        renderer3D->rotateTrackballUp(2.0f);
-    }
-    if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
-    {
-        renderer3D->rotateTrackballUp(-2.0f);
-    }
+        // Contrôles trackball (flèches)
+        if (ImGui::IsKeyDown(ImGuiKey_LeftArrow))
+        {
+            renderer3D->rotateTrackballLeft(2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_RightArrow))
+        {
+            renderer3D->rotateTrackballLeft(-2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
+        {
+            renderer3D->rotateTrackballUp(2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
+        {
+            renderer3D->rotateTrackballUp(-2.0f);
+        }
 
-    // Zoom avec molette
-    float wheel = ImGui::GetIO().MouseWheel;
-    if (wheel != 0.0f)
+        // Zoom avec molette
+        float wheel = ImGui::GetIO().MouseWheel;
+        if (wheel != 0.0f)
+        {
+            renderer3D->zoomTrackball(-wheel * 0.5f);
+        }
+    }
+    else if (renderer3D->getCameraMode() == CameraMode::Piece)
     {
-        renderer3D->zoomTrackball(-wheel * 0.5f);
+        // Piece camera controls - can rotate around piece with mouse and arrow keys but not move
+        
+        // Contrôles piece camera avec la souris (clic droit glissé)
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+        {
+            ImVec2 drag = ImGui::GetMouseDragDelta(ImGuiMouseButton_Right);
+            if (drag.x != 0.0f)
+            {
+                renderer3D->rotatePieceLeft(-drag.x * 0.5f);
+            }
+            if (drag.y != 0.0f)
+            {
+                renderer3D->rotatePieceUp(drag.y * 0.5f);
+            }
+            ImGui::ResetMouseDragDelta(ImGuiMouseButton_Right);
+        }
+
+        // Contrôles piece camera (flèches) - 360 degrees around and up/down without limits
+        if (ImGui::IsKeyDown(ImGuiKey_LeftArrow))
+        {
+            renderer3D->rotatePieceLeft(2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_RightArrow))
+        {
+            renderer3D->rotatePieceLeft(-2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_UpArrow))
+        {
+            renderer3D->rotatePieceUp(2.0f);
+        }
+        if (ImGui::IsKeyDown(ImGuiKey_DownArrow))
+        {
+            renderer3D->rotatePieceUp(-2.0f);
+        }
     }
 }
 

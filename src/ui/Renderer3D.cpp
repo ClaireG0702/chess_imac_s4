@@ -735,6 +735,16 @@ void Renderer3D::deletePlaneGeometry()
 
 void Renderer3D::render(const GameState& gameState)
 {
+    // Update piece camera if a cell is selected
+    if (gameState.isCellSelected())
+    {
+        auto [selectedRow, selectedCol] = gameState.getSelectedCell();
+        // Convert board coordinates (row, col) to 3D position
+        // Position at board position - camera at top of piece
+        glm::vec3 piecePosition(selectedCol + 0.5f, 1.5f, (7 - selectedRow) + 0.5f);
+        m_pieceCamera.setPiecePosition(piecePosition);
+    }
+
     // Bind framebuffer and render to texture
     glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
     glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
@@ -944,14 +954,15 @@ glm::mat4 Renderer3D::getViewProjectionMatrix() const
 
     if (m_cameraMode == CameraMode::Trackball)
     {
-    view = m_trackballCamera.getViewMatrix();
-    // Center the trackball camera around the board center (4, 4, 0) instead of origin
-    glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
-    view = view * glm::translate(glm::mat4(1.0f), -boardCenter);
+        view = m_trackballCamera.getViewMatrix();
+        // Center the trackball camera around the board center (4, 4, 0) instead of origin
+        glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
+        view = view * glm::translate(glm::mat4(1.0f), -boardCenter);
     }
-    else
+    else if (m_cameraMode == CameraMode::Piece)
     {
-        // TODO
+        // Piece camera: positioned at the selected piece, looking around
+        view = m_pieceCamera.getViewMatrix();
     }
 
     proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 200.0f);
@@ -976,4 +987,14 @@ void Renderer3D::rotateTrackballUp(float degrees)
 void Renderer3D::zoomTrackball(float delta)
 {
     m_trackballCamera.moveFront(delta);
+}
+
+void Renderer3D::rotatePieceLeft(float degrees)
+{
+    m_pieceCamera.rotateLeft(degrees);
+}
+
+void Renderer3D::rotatePieceUp(float degrees)
+{
+    m_pieceCamera.rotateUp(degrees);
 }
