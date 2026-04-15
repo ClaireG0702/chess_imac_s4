@@ -6,7 +6,6 @@
 #include <vector>
 #include "Skybox.hpp"
 #include "PieceModel.hpp"
-#include "glimac/Program.hpp"
 #include "glimac/glimac/Program.hpp"
 #include "glimac/glimac/TrackballCamera.hpp"
 

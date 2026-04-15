@@ -6,12 +6,13 @@ Mesh::~Mesh()
 }
 
 Mesh::Mesh(Mesh&& other) noexcept
-    : m_VAO(other.m_VAO), m_VBO(other.m_VBO), m_EBO(other.m_EBO), m_indexCount(other.m_indexCount)
+    : m_VAO(other.m_VAO), m_VBO(other.m_VBO), m_EBO(other.m_EBO), m_indexCount(other.m_indexCount), m_textureID(other.m_textureID)
 {
     other.m_VAO = 0;
     other.m_VBO = 0;
     other.m_EBO = 0;
     other.m_indexCount = 0;
+    other.m_textureID = 0;
 }
 
 Mesh& Mesh::operator=(Mesh&& other) noexcept
@@ -23,11 +24,13 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept
         m_VBO = other.m_VBO;
         m_EBO = other.m_EBO;
         m_indexCount = other.m_indexCount;
+        m_textureID = other.m_textureID;
 
         other.m_VAO = 0;
         other.m_VBO = 0;
         other.m_EBO = 0;
         other.m_indexCount = 0;
+        other.m_textureID = 0;
     }
     return *this;
 }
@@ -40,11 +43,14 @@ void Mesh::cleanup()
         glDeleteBuffers(1, &m_VBO);
     if (m_EBO != 0)
         glDeleteBuffers(1, &m_EBO);
+    if (m_textureID != 0)
+        glDeleteTextures(1, &m_textureID);
 
     m_VAO = 0;
     m_VBO = 0;
     m_EBO = 0;
     m_indexCount = 0;
+    m_textureID = 0;
 }
 
 void Mesh::uploadData(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices)
@@ -88,6 +94,11 @@ void Mesh::render() const
 {
     if (m_VAO == 0)
         return;
+
+    if (m_textureID != 0) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_textureID);
+    }
 
     glBindVertexArray(m_VAO);
     glDrawElements(GL_TRIANGLES, m_indexCount, GL_UNSIGNED_INT, 0);

@@ -69,9 +69,9 @@ bool Renderer3D::initialize(const std::string& executablePath, int width, int he
         return false;
     }
 
-    // Initialize skybox
+    // Initialize skybox with GLB model
     m_skybox = std::make_unique<Skybox>();
-    if (!m_skybox->initialize(m_executablePath))
+    if (!m_skybox->initialize(m_executablePath, true))
     {
         std::cerr << "Failed to initialize skybox" << std::endl;
         return false;
@@ -184,7 +184,7 @@ bool Renderer3D::createBoardGeometry()
     float squareSize   = 1.0f;
     float boardStartX  = 0.0f;
     float boardStartZ  = 0.0f;
-    float boardHeight  = 0.12f;  // Height of board surface above base
+    float boardHeight  = 0.4f;   // Thicker board surface
     float baseHeight   = 0.0f;   // Bottom of base
     float borderWidth  = 0.3f;   // Width of border around board
 
@@ -228,7 +228,7 @@ bool Renderer3D::createBoardGeometry()
     colors.push_back(bgg);
     colors.push_back(bgb);
 
-    // Base quad indices (2 triangles)
+    // Base quad indices (2 triangles for top face)
     indices.push_back(0);
     indices.push_back(1);
     indices.push_back(2);
@@ -238,6 +238,159 @@ bool Renderer3D::createBoardGeometry()
 
     vertexCount = 4;
 
+    // ===== ADD SIDE FACES FOR THICKNESS =====
+    // Front face (baseTop edge)
+    vertices.push_back(baseLeft);   // 4
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseRight);  // 5
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseRight);  // 6
+    vertices.push_back(baseHeight - 0.5f);  // Bottom
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    vertices.push_back(baseLeft);   // 7
+    vertices.push_back(baseHeight - 0.5f);  // Bottom
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    // Front face indices
+    indices.push_back(4);
+    indices.push_back(5);
+    indices.push_back(6);
+    indices.push_back(4);
+    indices.push_back(6);
+    indices.push_back(7);
+    vertexCount += 4;
+
+    // Back face (baseBottom edge)
+    vertices.push_back(baseRight);  // 8
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseLeft);   // 9
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseLeft);   // 10
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    vertices.push_back(baseRight);  // 11
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    // Back face indices
+    indices.push_back(8);
+    indices.push_back(9);
+    indices.push_back(10);
+    indices.push_back(8);
+    indices.push_back(10);
+    indices.push_back(11);
+    vertexCount += 4;
+
+    // Left face (baseLeft edge)
+    vertices.push_back(baseLeft);   // 12
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseLeft);   // 13
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseLeft);   // 14
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    vertices.push_back(baseLeft);   // 15
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    // Left face indices
+    indices.push_back(12);
+    indices.push_back(13);
+    indices.push_back(14);
+    indices.push_back(12);
+    indices.push_back(14);
+    indices.push_back(15);
+    vertexCount += 4;
+
+    // Right face (baseRight edge)
+    vertices.push_back(baseRight);  // 16
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseRight);  // 17
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.8f);
+    colors.push_back(bgg * 0.8f);
+    colors.push_back(bgb * 0.8f);
+
+    vertices.push_back(baseRight);  // 18
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    vertices.push_back(baseRight);  // 19
+    vertices.push_back(baseHeight - 0.5f);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr * 0.6f);
+    colors.push_back(bgg * 0.6f);
+    colors.push_back(bgb * 0.6f);
+
+    // Right face indices
+    indices.push_back(16);
+    indices.push_back(17);
+    indices.push_back(18);
+    indices.push_back(16);
+    indices.push_back(18);
+    indices.push_back(19);
+    vertexCount += 4;
+
     // ===== CREATE BOARD SQUARES =====
     // Generate 64 squares (8x8)
     for (int row = 0; row < 8; ++row)
@@ -246,7 +399,7 @@ bool Renderer3D::createBoardGeometry()
         {
             float x = boardStartX + col * squareSize;
             float z = boardStartZ + (7 - row) * squareSize;
-            float y = boardHeight;  // Raised above the base
+            float y = baseHeight + 0.001f;  // Just above the base to avoid z-fighting
 
             // Determine color: light (white-ish) or dark (blue-ish)
             bool  isLight = ((row + col) % 2) != 0;
@@ -587,7 +740,7 @@ void Renderer3D::render(const GameState& gameState)
     glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
 
     // Clear the framebuffer
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);  // Normal blue background
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Enable depth test
@@ -595,11 +748,11 @@ void Renderer3D::render(const GameState& gameState)
 
     // Get view-projection matrix from camera
     glm::mat4 viewProj = getViewProjectionMatrix();
-
-    // Render skybox
+    
+    // Render skybox FIRST as background
     m_skybox->render(viewProj);
 
-    // Render board
+    // Render board with regular view projection
     drawBoard(gameState);
 
     // Render pieces
@@ -647,13 +800,13 @@ void Renderer3D::drawPieces(const GameState& gameState)
             if (!piece)
                 continue;
 
-            // Position at board position
-            glm::vec3 position(col + 0.5f, 0.5f, (7 - row) + 0.5f);
+            // Position at board position - pieces sit on top of the squares
+            glm::vec3 position(col + 0.5f, 0.32f, (7 - row) + 0.5f);
             
             // Adjust height for king and queen to be level with other pieces
             if (piece->getType() == PieceType::King || piece->getType() == PieceType::Queen)
             {
-                position.y = 0.15f;  // Lower position for king/queen
+                position.y = 0.03f;  // Lower position for king/queen
             }
             
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
@@ -745,13 +898,13 @@ void Renderer3D::drawPieces(const GameState& gameState)
 void Renderer3D::drawSelectedHighlight(const GameState& gameState)
 {
     // TODO: Implement highlighting for selected cell
-    (void)gameState; // Suppress unused parameter warning
+    (void)gameState;  // Suppress unused parameter warning
 }
 
 void Renderer3D::drawPossibleMovesHighlight(const GameState& gameState)
 {
     // TODO: Implement highlighting for possible moves
-    (void)gameState; // Suppress unused parameter warning
+    (void)gameState;  // Suppress unused parameter warning
 }
 
 void Renderer3D::setViewportSize(int width, int height)
@@ -780,10 +933,10 @@ glm::mat4 Renderer3D::getViewProjectionMatrix() const
 
     if (m_cameraMode == CameraMode::Trackball)
     {
-        view = m_trackballCamera.getViewMatrix();
-        // Center the trackball camera around the board center (4, 4, 0) instead of origin
-        glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
-        view = view * glm::translate(glm::mat4(1.0f), -boardCenter);
+    view = m_trackballCamera.getViewMatrix();
+    // Center the trackball camera around the board center (4, 4, 0) instead of origin
+    glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
+    view = view * glm::translate(glm::mat4(1.0f), -boardCenter);
     }
     else
     {

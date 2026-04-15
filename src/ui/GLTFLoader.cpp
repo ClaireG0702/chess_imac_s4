@@ -39,6 +39,9 @@ std::vector<Mesh> GLTFLoader::loadGLB(const std::string& filePath)
     std::cout << "  Meshes: " << model.meshes.size() << std::endl;
 
     std::vector<Mesh> meshes;
+    
+    // Try to load texture from GLB
+    GLuint textureID = loadTextureFromGLB(model);
 
     // Load all meshes from the model
     for (size_t i = 0; i < model.meshes.size(); ++i)
@@ -56,6 +59,12 @@ std::vector<Mesh> GLTFLoader::loadGLB(const std::string& filePath)
 
             Mesh mesh;
             mesh.uploadData(vertices, indices);
+            
+            // Attach texture to mesh
+            if (textureID != 0) {
+                mesh.setTexture(textureID);
+            }
+            
             meshes.push_back(std::move(mesh));
 
             std::cout << "  Mesh " << i << ": " << vertices.size() << " vertices, " 
@@ -262,4 +271,80 @@ glm::vec2 GLTFLoader::getVec2FromAccessor(const tinygltf::Model& model, int acce
     }
 
     return glm::vec2(0.0f);
+}
+
+GLuint GLTFLoader::loadTextureFromGLB(const tinygltf::Model& model)
+{
+    if (model.images.empty())
+    {
+        std::cout << "  No images in GLB file, creating test texture..." << std::endl;
+        
+        // Create a test checkerboard texture
+        static constexpr int SIZE = 256;
+        unsigned char checkerboard[SIZE * SIZE * 3];
+        
+        for (int y = 0; y < SIZE; ++y) {
+            for (int x = 0; x < SIZE; ++x) {
+                int index = (y * SIZE + x) * 3;
+                bool isWhite = ((x / 16) + (y / 16)) % 2 == 0;
+                unsigned char color = isWhite ? 255 : 0;
+                checkerboard[index] = color;
+                checkerboard[index + 1] = color;
+                checkerboard[index + 2] = color;
+            }
+        }
+        
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, SIZE, SIZE, 0, GL_RGB, GL_UNSIGNED_BYTE, checkerboard);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        
+        return textureID;
+    }
+
+    const auto& image = model.images[0]; // Use first image
+    
+    if (image.image.empty())
+    {
+        std::cerr << "  Image data is empty" << std::endl;
+        return 0;
+    }
+
+    // Create OpenGL texture
+    GLuint textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Determine format based on components
+    GLenum format = GL_RGB;
+    GLenum internalFormat = GL_RGB8;
+    if (image.component == 4)
+    {
+        format = GL_RGBA;
+        internalFormat = GL_RGBA8;
+    }
+
+    // Upload texture data
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.width, image.height, 0, format, GL_UNSIGNED_BYTE, image.image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    
+    std::cout << "  ✓ Loaded texture: " << image.width << "x" << image.height << " (" << image.component << " components)" << std::endl;
+    
+    return textureID;
 }

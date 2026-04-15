@@ -31,7 +31,7 @@ void InputHandler::handleCameraInput()
     }
     else if (ImGui::IsKeyPressed(ImGuiKey_2))
     {
-        // TODO
+        // TODO: Implement mouse input handling
     }
 
     // Contrôles trackball avec la souris (clic droit glissé)

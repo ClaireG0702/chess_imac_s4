@@ -29,4 +29,5 @@ private:
     static std::vector<unsigned int> extractIndices(const tinygltf::Model& model, int meshIndex);
     static glm::vec3 getVec3FromAccessor(const tinygltf::Model& model, int accessorIndex, int elementIndex);
     static glm::vec2 getVec2FromAccessor(const tinygltf::Model& model, int accessorIndex, int elementIndex);
+    static GLuint loadTextureFromGLB(const tinygltf::Model& model);
 };
