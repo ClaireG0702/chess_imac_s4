@@ -145,8 +145,8 @@ bool Renderer3D::createShaders()
         glimac::FilePath applicationPath(m_executablePath);
         glimac::FilePath boardVs(applicationPath.dirPath() + "../../assets/shaders/board.vs.glsl");
         glimac::FilePath boardFs(applicationPath.dirPath() + "../../assets/shaders/board.fs.glsl");
-        glimac::FilePath pieceVs(applicationPath.dirPath() + "../../assets/shaders/piece.vs.glsl");
-        glimac::FilePath pieceFs(applicationPath.dirPath() + "../../assets/shaders/piece.fs.glsl");
+        glimac::FilePath pieceVs(applicationPath.dirPath() + "../../assets/shaders/blinnphong.vs.glsl");
+        glimac::FilePath pieceFs(applicationPath.dirPath() + "../../assets/shaders/blinnphong.fs.glsl");
 
         m_boardProgram = std::make_unique<glimac::Program>(
             glimac::loadProgram(boardVs, boardFs)
@@ -788,6 +788,17 @@ void Renderer3D::drawPieces(const GameState& gameState)
     glm::mat4 viewProj = getViewProjectionMatrix();
     GLint     vpLoc    = glGetUniformLocation(m_pieceProgram->getGLId(), "viewProjectionMatrix");
     glUniformMatrix4fv(vpLoc, 1, GL_FALSE, &viewProj[0][0]);
+
+    // Calculate camera position for specular calculation
+    glm::vec3 cameraPosition(4.0f, 15.0f, 14.0f);  // Approximate camera position
+    GLint camPosLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "cameraPosition");
+    glUniform3fv(camPosLoc, 1, &cameraPosition[0]);
+
+    // Get current player and pass to shader
+    Color currentPlayer = gameState.getCurrentPlayer();
+    float playerValue = (currentPlayer == Color::White) ? 0.0f : 1.0f;
+    GLint currentPlayerLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "currentPlayer");
+    glUniform1f(currentPlayerLoc, playerValue);
 
     const Board& board = gameState.getBoard();
 
