@@ -735,6 +735,9 @@ void Renderer3D::deletePlaneGeometry()
 
 void Renderer3D::render(const GameState& gameState)
 {
+    // Update animations
+    updateAnimation();
+
     // Update piece camera if a cell is selected
     if (gameState.isCellSelected())
     {
@@ -828,6 +831,30 @@ void Renderer3D::drawPieces(const GameState& gameState)
             if (piece->getType() == PieceType::King || piece->getType() == PieceType::Queen)
             {
                 position.y = 0.03f;  // Lower position for king/queen
+            }
+
+            // Handle piece animation if active and this is the destination piece
+            if (m_pieceAnimationManager.hasActiveMovement())
+            {
+                const PieceMovement& anim = m_pieceAnimationManager.getActiveMovement();
+                if (row == anim.toRow && col == anim.toCol)
+                {
+                    // This piece is being animated
+                    glm::vec3 fromPos(anim.fromCol + 0.5f, 0.32f, (7 - anim.fromRow) + 0.5f);
+                    glm::vec3 toPos = position;
+                    
+                    // Adjust from height for king/queen if needed
+                    // (we need to know the piece type at the destination, which we already have)
+                    if (piece->getType() == PieceType::King || piece->getType() == PieceType::Queen)
+                    {
+                        fromPos.y = 0.03f;
+                        toPos.y = 0.03f;
+                    }
+                    
+                    // Interpolate position based on animation progress
+                    float progress = anim.getProgress();
+                    position = fromPos + (toPos - fromPos) * progress;
+                }
             }
             
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
@@ -997,4 +1024,14 @@ void Renderer3D::rotatePieceLeft(float degrees)
 void Renderer3D::rotatePieceUp(float degrees)
 {
     m_pieceCamera.rotateUp(degrees);
+}
+
+void Renderer3D::animatePieceMovement(int fromRow, int fromCol, int toRow, int toCol, float duration)
+{
+    m_pieceAnimationManager.startMovement(fromRow, fromCol, toRow, toCol, duration);
+}
+
+void Renderer3D::updateAnimation()
+{
+    m_pieceAnimationManager.update();
 }

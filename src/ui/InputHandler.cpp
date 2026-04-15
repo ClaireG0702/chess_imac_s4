@@ -153,7 +153,12 @@ void InputHandler::handleMouseClick()
         {
             if (m_gameState.makeMove(selectedRow, selectedCol, row, col))
             {
-                // Move successful, deselect the cell
+                // Move successful - animate the piece
+                Renderer3D* renderer3D = m_renderer.getRenderer3D();
+                if (renderer3D)
+                {
+                    renderer3D->animatePieceMovement(selectedRow, selectedCol, row, col, 1.8f);
+                }
                 m_gameState.deselectCell();
             }
             else
