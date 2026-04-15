@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include "Skybox.hpp"
+#include "PieceModel.hpp"
 #include "glimac/Program.hpp"
 #include "glimac/glimac/Program.hpp"
 #include "glimac/glimac/TrackballCamera.hpp"
@@ -63,6 +64,10 @@ private:
 
     // Skybox
     std::unique_ptr<Skybox> m_skybox;
+
+    // Piece models loaded from glTF/glb files
+    std::unique_ptr<PieceModel> m_pieceModels;
+    bool                        m_useModeledPieces; // Flag to use 3D models vs simple cubes
 
     // Shader programs
     std::unique_ptr<glimac::Program> m_boardProgram;

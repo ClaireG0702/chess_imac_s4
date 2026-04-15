@@ -84,6 +84,7 @@ private:
     std::vector<EventRecord>                 m_eventHistory;
     int                                      m_turnNumber;
     bool                                     m_daltonianMode;
+    int                                      m_daltonismTurnsRemaining; // Number of turns daltonism remains active
     Color                                    m_originalColors[BOARD_SIZE][BOARD_SIZE]; // Store original colors for restoration
     bool                                     m_colorsSaved;
 
@@ -109,4 +110,5 @@ private:
     void applyADHDEvent();
     void applyAutismEvent();
     void applyDaltonismEvent();
+    void disableDaltonism(); // Restore original colors and disable daltonism mode
 };

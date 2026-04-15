@@ -40,6 +40,10 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS src/*)
 target_sources(${PROJECT_NAME} PRIVATE ${MY_SOURCES})
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 target_include_directories(${PROJECT_NAME} PRIVATE src/glimac)
+# Include glimac sources to use the same stb_image.h (avoid duplicate definitions)
+target_include_directories(${PROJECT_NAME} PRIVATE src/glimac/src)
+# tinygltf after glimac so it finds glimac's stb_image.h
+target_include_directories(${PROJECT_NAME} PRIVATE lib/tinygltf)
 
 # Add quick-imgui library
 add_subdirectory(lib/quick_imgui)

@@ -9,7 +9,7 @@
 #include "pieces/Queen.hpp"
 #include "pieces/Rook.hpp"
 
-GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_gameMode(GameMode::Classic), m_selectedRow(INVALID_POSITION), m_selectedCol(INVALID_POSITION), m_promotionPending(false), m_promotionRow(INVALID_POSITION), m_promotionCol(INVALID_POSITION), m_turnNumber(0), m_daltonianMode(false), m_colorsSaved(false)
+GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_gameMode(GameMode::Classic), m_selectedRow(INVALID_POSITION), m_selectedCol(INVALID_POSITION), m_promotionPending(false), m_promotionRow(INVALID_POSITION), m_promotionCol(INVALID_POSITION), m_turnNumber(0), m_daltonianMode(false), m_daltonismTurnsRemaining(0), m_colorsSaved(false)
 {
     m_board.initialize();
     m_gameEventManager  = nullptr;
@@ -29,8 +29,9 @@ void GameState::initialize()
     m_promotionCol     = INVALID_POSITION;
     m_turnNumber       = 0;
     m_eventHistory.clear();
-    m_daltonianMode = false;
-    m_colorsSaved   = false;
+    m_daltonianMode          = false;
+    m_daltonismTurnsRemaining = 0;
+    m_colorsSaved            = false;
 
     // Initialize event managers for chaotic mode
     if (m_gameMode == GameMode::Chaotic)
@@ -88,18 +89,28 @@ bool GameState::makeMove(int fromRow, int fromCol, int toRow, int toCol)
     // Apply events triggered by piece characteristics
     applyCharacteristicEvents(movedPiece, toRow, toCol);
 
-    switchPlayer();
-    updateGameStatus();
-    deselectCell();
-
     // Increment turn counter
     m_turnNumber++;
 
-    // Update chaos events if in chaotic mode
+    // Update chaos events if in chaotic mode (BEFORE switching player)
     if (m_gameMode == GameMode::Chaotic)
     {
         updateChaosEvents();
     }
+
+    // Handle Daltonism duration: disable after 1 turn (BEFORE switching player)
+    if (m_daltonianMode && m_daltonismTurnsRemaining > 0)
+    {
+        m_daltonismTurnsRemaining--;
+        if (m_daltonismTurnsRemaining == 0)
+        {
+            disableDaltonism();
+        }
+    }
+
+    switchPlayer();
+    updateGameStatus();
+    deselectCell();
 
     return true;
 }
@@ -820,8 +831,9 @@ void GameState::applyDaltonismEvent()
         }
     }
 
-    // Enable Daltonism mode
-    m_daltonianMode = true;
+    // Enable Daltonism mode for 1 turn (set to 2 because we'll decrement at end of current move)
+    m_daltonianMode             = true;
+    m_daltonismTurnsRemaining   = 2;
 }
 
 void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCol)
@@ -877,4 +889,28 @@ void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCo
 void GameState::recordEvent(const std::string& eventName)
 {
     m_eventHistory.push_back({eventName, m_turnNumber, m_currentPlayer});
+}
+
+void GameState::disableDaltonism()
+{
+    if (!m_daltonianMode || !m_colorsSaved)
+        return;
+
+    // Restore original colors for all pieces
+    for (int row = 0; row < BOARD_SIZE; ++row)
+    {
+        for (int col = 0; col < BOARD_SIZE; ++col)
+        {
+            Piece* piece = m_board.getPieceAt(row, col);
+            if (piece)
+            {
+                piece->setColor(m_originalColors[row][col]);
+            }
+        }
+    }
+
+    // Disable Daltonism mode
+    m_daltonianMode           = false;
+    m_daltonismTurnsRemaining = 0;
+    m_colorsSaved             = false;
 }

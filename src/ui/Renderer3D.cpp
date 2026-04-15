@@ -1,6 +1,7 @@
 #include "Renderer3D.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <algorithm>
 #include "GLHeaders.hpp"
 #include "core/Board.hpp"
 #include "core/GameState.hpp"
@@ -8,7 +9,7 @@
 #include "glimac/FilePath.hpp"
 
 Renderer3D::Renderer3D()
-    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0)
+    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0), m_useModeledPieces(false)
 {
 }
 
@@ -74,6 +75,24 @@ bool Renderer3D::initialize(const std::string& executablePath, int width, int he
     {
         std::cerr << "Failed to initialize skybox" << std::endl;
         return false;
+    }
+
+    // Try to load piece models from glTF/glb files
+    glimac::FilePath applicationPath(m_executablePath);
+    std::string modelsPath = applicationPath.dirPath() + "../../assets/models";
+    
+    m_pieceModels = std::make_unique<PieceModel>();
+    if (m_pieceModels->loadFromDirectory(modelsPath))
+    {
+        m_useModeledPieces = true;
+        std::cout << "Successfully loaded piece models from: " << modelsPath << std::endl;
+    }
+    else
+    {
+        m_useModeledPieces = false;
+        std::cout << "Piece model directory not found or files missing. Using fallback cube geometry." << std::endl;
+        std::cout << "Models directory path: " << modelsPath << std::endl;
+        std::cout << "Place your .glb files at: " << modelsPath << "/pawn.glb, knight.glb, etc." << std::endl;
     }
 
     return true;
@@ -157,7 +176,7 @@ bool Renderer3D::createShaders()
 
 bool Renderer3D::createBoardGeometry()
 {
-    // Create 8x8 board with quads (light/dark squares)
+    // Create 8x8 board with quads (light/dark squares) + simple border
     std::vector<float>        vertices;
     std::vector<float>        colors;
     std::vector<unsigned int> indices;
@@ -165,10 +184,61 @@ bool Renderer3D::createBoardGeometry()
     float squareSize   = 1.0f;
     float boardStartX  = 0.0f;
     float boardStartZ  = 0.0f;
-    float squareHeight = 0.1f; // Thin squares
+    float boardHeight  = 0.12f;  // Height of board surface above base
+    float baseHeight   = 0.0f;   // Bottom of base
+    float borderWidth  = 0.3f;   // Width of border around board
 
     unsigned int vertexCount = 0;
 
+    // Border gray color
+    float bgr = 100.0f / 255.0f, bgg = 100.0f / 255.0f, bgb = 100.0f / 255.0f;
+
+    // ===== CREATE SIMPLE FLAT BASE PLATFORM =====
+    float baseLeft   = boardStartX - borderWidth;
+    float baseRight  = boardStartX + 8.0f * squareSize + borderWidth;
+    float baseTop    = boardStartZ - borderWidth;
+    float baseBottom = boardStartZ + 8.0f * squareSize + borderWidth;
+
+    // Simple flat rectangular base
+    vertices.push_back(baseLeft);
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr);
+    colors.push_back(bgg);
+    colors.push_back(bgb);
+
+    vertices.push_back(baseRight);
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseTop);
+    colors.push_back(bgr);
+    colors.push_back(bgg);
+    colors.push_back(bgb);
+
+    vertices.push_back(baseRight);
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr);
+    colors.push_back(bgg);
+    colors.push_back(bgb);
+
+    vertices.push_back(baseLeft);
+    vertices.push_back(baseHeight);
+    vertices.push_back(baseBottom);
+    colors.push_back(bgr);
+    colors.push_back(bgg);
+    colors.push_back(bgb);
+
+    // Base quad indices (2 triangles)
+    indices.push_back(0);
+    indices.push_back(1);
+    indices.push_back(2);
+    indices.push_back(0);
+    indices.push_back(2);
+    indices.push_back(3);
+
+    vertexCount = 4;
+
+    // ===== CREATE BOARD SQUARES =====
     // Generate 64 squares (8x8)
     for (int row = 0; row < 8; ++row)
     {
@@ -176,7 +246,7 @@ bool Renderer3D::createBoardGeometry()
         {
             float x = boardStartX + col * squareSize;
             float z = boardStartZ + (7 - row) * squareSize;
-            float y = 0.0f;
+            float y = boardHeight;  // Raised above the base
 
             // Determine color: light (white-ish) or dark (blue-ish)
             bool  isLight = ((row + col) % 2) != 0;
@@ -196,8 +266,7 @@ bool Renderer3D::createBoardGeometry()
                 b = 99.0f / 255.0f;
             }
 
-            // 4 vertices per square
-            // Top surface
+            // 4 vertices per square (just a flat quad)
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
@@ -226,36 +295,7 @@ bool Renderer3D::createBoardGeometry()
             colors.push_back(g);
             colors.push_back(b);
 
-            // Side surface (top edge)
-            vertices.push_back(x);
-            vertices.push_back(y + squareHeight);
-            vertices.push_back(z);
-            colors.push_back(r * 0.8f);
-            colors.push_back(g * 0.8f);
-            colors.push_back(b * 0.8f);
-
-            vertices.push_back(x + squareSize);
-            vertices.push_back(y + squareHeight);
-            vertices.push_back(z);
-            colors.push_back(r * 0.8f);
-            colors.push_back(g * 0.8f);
-            colors.push_back(b * 0.8f);
-
-            vertices.push_back(x + squareSize);
-            vertices.push_back(y + squareHeight);
-            vertices.push_back(z + squareSize);
-            colors.push_back(r * 0.8f);
-            colors.push_back(g * 0.8f);
-            colors.push_back(b * 0.8f);
-
-            vertices.push_back(x);
-            vertices.push_back(y + squareHeight);
-            vertices.push_back(z + squareSize);
-            colors.push_back(r * 0.8f);
-            colors.push_back(g * 0.8f);
-            colors.push_back(b * 0.8f);
-
-            // Indices for this square's top (2 triangles)
+            // Indices for this square (2 triangles)
             indices.push_back(vertexCount + 0);
             indices.push_back(vertexCount + 1);
             indices.push_back(vertexCount + 2);
@@ -264,16 +304,7 @@ bool Renderer3D::createBoardGeometry()
             indices.push_back(vertexCount + 2);
             indices.push_back(vertexCount + 3);
 
-            // Indices for side surface (front face)
-            indices.push_back(vertexCount + 0);
-            indices.push_back(vertexCount + 4);
-            indices.push_back(vertexCount + 5);
-
-            indices.push_back(vertexCount + 0);
-            indices.push_back(vertexCount + 5);
-            indices.push_back(vertexCount + 1);
-
-            vertexCount += 8;
+            vertexCount += 4;
         }
     }
 
@@ -607,7 +638,7 @@ void Renderer3D::drawPieces(const GameState& gameState)
 
     const Board& board = gameState.getBoard();
 
-    // Render each piece as a cube
+    // Render each piece
     for (int row = 0; row < 8; ++row)
     {
         for (int col = 0; col < 8; ++col)
@@ -616,26 +647,44 @@ void Renderer3D::drawPieces(const GameState& gameState)
             if (!piece)
                 continue;
 
-            // Position cube at board position
+            // Position at board position
             glm::vec3 position(col + 0.5f, 0.5f, (7 - row) + 0.5f);
+            
+            // Adjust height for king and queen to be level with other pieces
+            if (piece->getType() == PieceType::King || piece->getType() == PieceType::Queen)
+            {
+                position.y = 0.15f;  // Lower position for king/queen
+            }
+            
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
+            
+            // Rotate 90 degrees to the left for proper orientation
+            modelMatrix = glm::rotate(modelMatrix, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            
+            // Rotate pieces based on color: black pieces face opposite direction
+            if (piece->getColor() == Color::Black)
+            {
+                modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            }
+            
+            // Scale down the piece models to fit properly on the board
+            modelMatrix = glm::scale(modelMatrix, glm::vec3(0.3f));
 
             GLint modelLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "modelMatrix");
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &modelMatrix[0][0]);
 
             // Set piece color based on player
-            // Set piece color based on player and daltonism mode
             glm::vec3 pieceColor;
             if (m_daltonismMode)
             {
-                // Couleurs daltonisme (exemple : orange et bleu)
+                // Daltonism colors (orange and blue)
                 pieceColor = (piece->getColor() == Color::White)
                                  ? glm::vec3(1.0f, 0.5f, 0.0f)  // Orange
-                                 : glm::vec3(0.0f, 0.5f, 1.0f); // Bleu
+                                 : glm::vec3(0.0f, 0.5f, 1.0f); // Blue
             }
             else
             {
-                // Couleurs normales
+                // Normal colors
                 pieceColor = (piece->getColor() == Color::White)
                                  ? glm::vec3(1.0f, 1.0f, 1.0f)
                                  : glm::vec3(0.2f, 0.2f, 0.2f);
@@ -644,6 +693,48 @@ void Renderer3D::drawPieces(const GameState& gameState)
             GLint colorLoc = glGetUniformLocation(m_pieceProgram->getGLId(), "pieceColor");
             glUniform3fv(colorLoc, 1, &pieceColor[0]);
 
+            // Use 3D models if available
+            if (m_useModeledPieces && m_pieceModels)
+            {
+                // Get piece type name in lowercase
+                std::string pieceName;
+                switch (piece->getType())
+                {
+                    case PieceType::Pawn:
+                        pieceName = "pawn";
+                        break;
+                    case PieceType::Knight:
+                        pieceName = "knight";
+                        break;
+                    case PieceType::Bishop:
+                        pieceName = "bishop";
+                        break;
+                    case PieceType::Rook:
+                        pieceName = "rook";
+                        break;
+                    case PieceType::Queen:
+                        pieceName = "queen";
+                        break;
+                    case PieceType::King:
+                        pieceName = "king";
+                        break;
+                    default:
+                        pieceName = "pawn";
+                        break;
+                }
+
+                // Try to get the mesh for this piece type
+                Mesh* mesh = m_pieceModels->getMesh(pieceName);
+                if (mesh)
+                {
+                    // Render using 3D model
+                    mesh->render();
+                    continue;
+                }
+                // If mesh not found, fall through to cube rendering
+            }
+
+            // Fallback: render as cube
             glBindVertexArray(m_pieceVAO);
             glDrawElements(GL_TRIANGLES, m_pieceIndexCount, GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);

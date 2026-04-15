@@ -1,0 +1,42 @@
+#pragma once
+
+#include <glm/glm.hpp>
+#include <vector>
+#include "GLHeaders.hpp"
+
+struct Vertex {
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 texCoord;
+};
+
+class Mesh {
+public:
+    Mesh() : m_VAO(0), m_VBO(0), m_EBO(0), m_indexCount(0) {}
+    ~Mesh();
+
+    Mesh(const Mesh&)            = delete;
+    Mesh& operator=(const Mesh&) = delete;
+    Mesh(Mesh&&) noexcept;
+    Mesh& operator=(Mesh&&) noexcept;
+
+    // Upload mesh data to GPU
+    void uploadData(const std::vector<Vertex>& vertices, const std::vector<unsigned int>& indices);
+
+    // Render the mesh
+    void render() const;
+
+    // Getters
+    GLuint getVAO() const { return m_VAO; }
+    GLuint getVBO() const { return m_VBO; }
+    GLuint getEBO() const { return m_EBO; }
+    unsigned int getIndexCount() const { return m_indexCount; }
+
+private:
+    GLuint m_VAO;
+    GLuint m_VBO;
+    GLuint m_EBO;
+    unsigned int m_indexCount;
+
+    void cleanup();
+};
