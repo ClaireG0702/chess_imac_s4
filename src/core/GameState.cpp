@@ -29,9 +29,9 @@ void GameState::initialize()
     m_promotionCol     = INVALID_POSITION;
     m_turnNumber       = 0;
     m_eventHistory.clear();
-    m_daltonianMode          = false;
+    m_daltonianMode           = false;
     m_daltonismTurnsRemaining = 0;
-    m_colorsSaved            = false;
+    m_colorsSaved             = false;
 
     // Initialize event managers for chaotic mode
     if (m_gameMode == GameMode::Chaotic)
@@ -302,7 +302,7 @@ void GameState::applyGameEvent(std::mt19937& gen)
         applyTransEpidemicEvent();
         break;
     case 2:
-        applyFurryEvent();
+        applyCavalierSauvageEvent();
         break;
     case 3:
         applyDaltonismEvent();
@@ -323,13 +323,13 @@ void GameState::applyPieceEvent(std::mt19937& gen)
         applyDyscalculiaEvent();
         break;
     case 1:
-        applyGenderfluidEvent();
+        applyMutationEvent();
         break;
     case 2:
-        applyADHDEvent();
+        applyRuptureAttentionEvent();
         break;
     case 3:
-        applyAutismEvent();
+        applyFuitevent();
         break;
     default:
         break;
@@ -462,14 +462,14 @@ void GameState::applyDyscalculiaEvent()
     }
 }
 
-// Genderfluid: Exponential - pieces change type over time
-void GameState::applyGenderfluidEvent()
+// Mutation: Exponential - pieces change type over time
+void GameState::applyMutationEvent()
 {
     if (!m_pieceEventManager)
         return;
-    recordEvent("Genderfluid");
+    recordEvent("Mutation");
 
-    double changeTime = m_pieceEventManager->getGenderfluidChangeTime();
+    double changeTime = m_pieceEventManager->getMutationChangeTime();
 
     // Randomly select a piece and change its type
     std::vector<std::pair<int, int>> transformablePieces;
@@ -520,7 +520,7 @@ void GameState::applyTransEpidemicEvent()
 {
     if (!m_gameEventManager)
         return;
-    recordEvent("Épidémie");
+    recordEvent("SwapReinePion");
 
     // Find all Pawns and Queens on the board
     std::vector<std::pair<int, int>> pawnOrQueen;
@@ -573,12 +573,12 @@ void GameState::applyTransEpidemicEvent()
     }
 }
 
-// Furry: UniformDiscrete - transforms a random piece into a Knight
-void GameState::applyFurryEvent()
+// CavalierSauvage: UniformDiscrete - transforms a random piece into a Knight
+void GameState::applyCavalierSauvageEvent()
 {
     if (!m_gameEventManager)
         return;
-    recordEvent("Furry");
+    recordEvent("CavalierSauvage");
 
     std::vector<std::pair<int, int>> pieces;
     for (int row = 0; row < BOARD_SIZE; ++row)
@@ -612,14 +612,14 @@ void GameState::applyFurryEvent()
     }
 }
 
-// ADHD: Cauchy - random chaotic behavior - pieces move to random valid destinations
-void GameState::applyADHDEvent()
+// RuptureAttention: Cauchy - random chaotic behavior - pieces move to random valid destinations
+void GameState::applyRuptureAttentionEvent()
 {
     if (!m_pieceEventManager)
         return;
-    recordEvent("ADHD");
+    recordEvent("RuptureAttention");
 
-    double chaotic = m_pieceEventManager->getADHDRandomBehavior();
+    double chaotic = m_pieceEventManager->getRuptureAttentionRandomBehavior();
 
     // Select random pieces and move them to random valid destinations
     std::vector<std::pair<int, int>> pieces;
@@ -673,12 +673,12 @@ void GameState::applyADHDEvent()
     }
 }
 
-// Autism: Hypergeometric - forces pieces to move only to isolated squares
-void GameState::applyAutismEvent()
+// Fuite: Hypergeometric - forces pieces to move only to isolated squares
+void GameState::applyFuitevent()
 {
     if (!m_pieceEventManager)
         return;
-    recordEvent("Autism");
+    recordEvent("Fuite");
 
     // Find all pieces that can move to isolated squares
     std::vector<std::pair<int, int>> validPieces;
@@ -832,8 +832,8 @@ void GameState::applyDaltonismEvent()
     }
 
     // Enable Daltonism mode for 1 turn (set to 2 because we'll decrement at end of current move)
-    m_daltonianMode             = true;
-    m_daltonismTurnsRemaining   = 2;
+    m_daltonianMode           = true;
+    m_daltonismTurnsRemaining = 2;
 }
 
 void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCol)
@@ -855,33 +855,33 @@ void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCo
         }
     }
 
-    // Check Genderfluid characteristic
-    if (movedPiece->hasCharacteristic(PieceCharacteristic::Genderfluid))
+    // Check Mutation characteristic
+    if (movedPiece->hasCharacteristic(PieceCharacteristic::Mutation))
     {
-        double changeTime = m_pieceEventManager->getGenderfluidChangeTime();
+        double changeTime = m_pieceEventManager->getMutationChangeTime();
         if (changeTime > 0.5)
         { // If time value exceeds threshold
-            applyGenderfluidEvent();
+            applyMutationEvent();
         }
     }
 
-    // Check ADHD characteristic
-    if (movedPiece->hasCharacteristic(PieceCharacteristic::ADHD))
+    // Check RuptureAttention characteristic
+    if (movedPiece->hasCharacteristic(PieceCharacteristic::RuptureAttention))
     {
-        double chaotic = m_pieceEventManager->getADHDRandomBehavior();
+        double chaotic = m_pieceEventManager->getRuptureAttentionRandomBehavior();
         if (std::abs(chaotic) > 1.0)
         { // If chaotic value is high (Cauchy heavy tails)
-            applyADHDEvent();
+            applyRuptureAttentionEvent();
         }
     }
 
-    // Check Autism characteristic
-    if (movedPiece->hasCharacteristic(PieceCharacteristic::Autism))
+    // Check Fuite characteristic
+    if (movedPiece->hasCharacteristic(PieceCharacteristic::Fuite))
     {
-        int isolatedCount = m_pieceEventManager->getAutismIsolatedCount();
+        int isolatedCount = m_pieceEventManager->getFuiteIsolatedCount();
         if (isolatedCount > 10)
         { // If isolation count exceeds threshold
-            applyAutismEvent();
+            applyFuitevent();
         }
     }
 }

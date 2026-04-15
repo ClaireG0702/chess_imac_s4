@@ -1,33 +1,34 @@
 #pragma once
 
-#include "UniformContinuous.hpp"
 #include <cmath>
+#include "UniformContinuous.hpp"
+
 
 namespace Math {
 
 /**
  * Loi de Cauchy (Cauchy Distribution)
- * 
+ *
  * Loi pathologique sans espérance ni variance finie.
  * Exemple classique d'une loi avec comportement chaotique.
- * 
+ *
  * Paramètres:
  * - a: localisation (médiane)
  * - b: échelle (> 0)
- * 
+ *
  * Caractéristiques:
  * - Domaine: (-∞, +∞)
  * - Espérance: non définie
  * - Variance: infinie
  * - Queues très épaisses → valeurs extrêmes fréquentes
- * 
- * Exemple: TDAH - Comportement très chaotique et imprévisible
+ *
+ * Exemple: Rupture d'attention - Comportement très chaotique et imprévisible
  */
 class Cauchy {
 private:
     UniformContinuous m_uniform;
-    double m_a;
-    double m_b;
+    double            m_a;
+    double            m_b;
 
 public:
     /**

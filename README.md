@@ -5,13 +5,13 @@
 Voici une liste des évènements aléatoire qu'il est possible de retrouver :
 
 - **Révolution** : les pions se révoltent et passe du côté opposé
-- **Epidémie de trans** : les pions deviennent des dames et les dames de pions
-- **Furry** : une pièce au hasard devient un cavalier
+- **Swap Reine Pion** : les pions deviennent des dames et les dames de pions
+- **Cavalier Sauvage** : une pièce au hasard devient un cavalier
 <!-- - **Médusa** : une pièce se change en tour qui ne peut plus bouger -->
-- **TDAH** : pendant 2 tours, les pièces ne respectent pas ce qui est dit et font un autre mouvement
-- **Autisme** : les pions ne veulent plus aller se coller aux autres pions, les seuls mouvements possible durant ce tour c'est aller sur une case isolée
+- **Rupture d'attention** : pendant 2 tours, les pièces ne respectent pas ce qui est dit et font un autre mouvement
+- **Fuite** : les pions ne veulent plus aller se coller aux autres pions, les seuls mouvements possible durant ce tour c'est aller sur une case isolée
 - **Dyscalculie** : les pions arrivent plus a bouger du bon nombre de case, tu leurs dis de bouger de 2 et ils bougent de 1 ou 3 au pif
-- **Genderfluid** : une pièce change a un tour random de type
+- **Mutation** : une pièce change a un tour random de type
   <!-- - **Allier** : une pièce random devient neutre, elle joue pour la personne qui la bouge pendant les 3 prochains tours -->
   <!-- - **Fusion** : fusionne 2 pions et en fait un super pion qui peut se déplacer de 2 cases à chaque fois -->
 - **Daltonien** : le plateau devient entièrement gris et tu peux jouer n'importe quelle pièce (au risque de se tromper)
@@ -23,12 +23,12 @@ Voici une liste des évènements aléatoire qu'il est possible de retrouver :
 | Evènement         | Loi proposée             | Pourquoi                                                                                                           |
 | ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | Révolution        | **Loi binomiale**        | Chaque pion a une probabilité (p) de se rebeller. Le nombre de pions qui changent de camp suit donc une binomiale. |
-| Épidémie de trans | **Loi de Poisson**       | Les épidémies sont souvent modélisées par Poisson : nombre de transformations par tour.                            |
-| Furry             | **Loi uniforme**         | On choisit une pièce au hasard parmi toutes les pièces.                                                            |
-| TDAH              | **Loi de Cauchy**        | Loi très imprévisible avec valeurs extrêmes → correspond bien à un comportement chaotique.                         |
-| Autisme           | **Loi hypergéométrique** | On sélectionne parmi les cases isolées sans remise dans un ensemble fini (le plateau).                             |
+| Swap Reine Pion   | **Loi de Poisson**       | Les Swap Reine Pions sont souvent modélisées par Poisson : nombre de transformations par tour.                            |
+| Cavalier Sauvage  | **Loi uniforme**         | On choisit une pièce au hasard parmi toutes les pièces.                                                            |
+| Rupture d'attention| **Loi de Cauchy**        | Loi très imprévisible avec valeurs extrêmes → correspond bien à un comportement chaotique.                         |
+| Fuite           | **Loi hypergéométrique** | On sélectionne parmi les cases isolées sans remise dans un ensemble fini (le plateau).                             |
 | Dyscalculie       | **Loi normale (Gauss)**  | L’erreur autour du mouvement prévu peut suivre une distribution centrée (1,2,3 cases autour de la valeur).         |
-| Genderfluid       | **Loi exponentielle**    | Temps d'attente avant le changement de type de pièce.                                                              |
+| Mutation       | **Loi exponentielle**    | Temps d'attente avant le changement de type de pièce.                                                              |
 | Daltonien         | **Loi du Chi-deux**      | Utilisable pour mesurer la confusion entre catégories (types de pièces).                                           |
 
 ## Architecture des événements
@@ -38,16 +38,16 @@ Les événements sont séparés en deux catégories :
 ### Événements affectant le JEU (modifient l'état global du plateau)
 
 - **Révolution** : les pions se révoltent et changent de côté
-- **Épidémie de trans** : les pions deviennent des dames et les dames deviennent des pions
-- **Furry** : une pièce au hasard devient un cavalier
+- **Swap Reine Pion** : les pions deviennent des dames et les dames deviennent des pions
+- **Cavalier Sauvage** : une pièce au hasard devient un cavalier
 - **Daltonien** : les pions deviennent gris, on peut jouer n'importe quelle pièce que ce soit de son camp ou du camp adversaire (tout en respectant les mouvements possibles)
 
 ### Événements affectant les PIONS (modifient le comportement des mouvements)
 
-- **TDAH** : les pièces font un autre mouvement que celui choisi
-- **Autisme** : les pions ne peuvent se déplacer que vers des cases isolées
+- **Rupture d'attention** : les pièces font un autre mouvement que celui choisi
+- **Fuite** : les pions ne peuvent se déplacer que vers des cases isolées
 - **Dyscalculie** : les pions bougent du mauvais nombre de cases
-- **Genderfluid** : une pièce change aléatoirement de type
+- **Mutation** : une pièce change aléatoirement de type
 
 ---
 
@@ -89,7 +89,7 @@ Cette section documente rigoureusement l'ensemble des lois utilisées, leurs par
 
 ---
 
-### 2. **Épidémie de Trans** → Loi de Poisson $\mathcal{P}(\lambda)$
+### 2. **Swap Reine Pion** → Loi de Poisson $\mathcal{P}(\lambda)$
 
 **Type** : Loi discrète
 
@@ -103,7 +103,7 @@ Cette section documente rigoureusement l'ensemble des lois utilisées, leurs par
 
 **Variance** : $\text{Var}(X) = \lambda$
 
-**Justification** : Les épidémies suivent classiquement une loi de Poisson. Le nombre de transformations Pions ↔ Dames par événement est modélisé ainsi.
+**Justification** : Les Swap Reine Pions suivent classiquement une loi de Poisson. Le nombre de transformations Pions ↔ Dames par événement est modélisé ainsi.
 
 **Exemple d'exécution** : Avec $\lambda = 2$ :
 
@@ -113,7 +113,7 @@ Cette section documente rigoureusement l'ensemble des lois utilisées, leurs par
 
 ---
 
-### 3. **Furry** → Loi Uniforme Discrète $\mathcal{U}(a, b)$
+### 3. **Cavalier Sauvage** → Loi Uniforme Discrète $\mathcal{U}(a, b)$
 
 **Type** : Loi discrète
 
@@ -137,7 +137,7 @@ Cette section documente rigoureusement l'ensemble des lois utilisées, leurs par
 
 ---
 
-### 4. **TDAH** → Loi de Cauchy $\mathcal{C}(x_0, \gamma)$ ⭐ Densité
+### 4. **Rupture d'attention** → Loi de Cauchy $\mathcal{C}(x_0, \gamma)$ ⭐ Densité
 
 **Type** : Loi continue **à densité**
 
@@ -153,13 +153,13 @@ $$f(x) = \frac{1}{\pi \gamma \left[1 + \left(\frac{x - x_0}{\gamma}\right)^2\rig
 
 **Variance** : **Infinie** ⚠️
 
-**Justification** : La loi de Cauchy est extrêmement imprévisible avec des valeurs aberrantes infinies. Elle modélise parfaitement le TDAH où le mouvement effectué est radicalement différent de celui attendu, sans moyenne bien définie ni variance finie.
+**Justification** : La loi de Cauchy est extrêmement imprévisible avec des valeurs aberrantes infinies. Elle modélise parfaitement le Rupture d'attention où le mouvement effectué est radicalement différent de celui attendu, sans moyenne bien définie ni variance finie.
 
 **Remarque académique** : C'est une loi pathologique rare où $E[X]$ et $\text{Var}(X)$ n'existent pas, illustrant l'imprévisibilité radicale.
 
 ---
 
-### 5. **Autisme** → Loi Hypergéométrique $\mathcal{H}(N, K, n)$
+### 5. **Fuite** → Loi Hypergéométrique $\mathcal{H}(N, K, n)$
 
 **Type** : Loi discrète
 
@@ -210,7 +210,7 @@ $$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\ri
 
 ---
 
-### 7. **Genderfluid** → Loi Exponentielle $\mathcal{E}(\lambda)$ ⭐ Densité
+### 7. **Mutation** → Loi Exponentielle $\mathcal{E}(\lambda)$ ⭐ Densité
 
 **Type** : Loi continue **à densité**
 
@@ -268,12 +268,12 @@ $$f(x) = \frac{1}{2^{k/2} \Gamma(k/2)} x^{(k/2)-1} e^{-x/2}$$
 | Événement   | Loi              | Type     | Densité?   | $E[X]$ définie? | $\text{Var}(X)$ définie? |
 | ----------- | ---------------- | -------- | ---------- | --------------- | ------------------------ |
 | Révolution  | Binomiale        | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| Épidémie    | Poisson          | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| Furry       | Uniforme disc.   | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| TDAH        | Cauchy           | Continue | ✅ **Oui** | ❌ Non          | ❌ Non                   |
-| Autisme     | Hypergéométrique | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
+| SwapReinePion| Poisson          | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
+| Cavalier    | Uniforme disc.   | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
+| Rupture d'attention | Cauchy           | Continue | ✅ **Oui** | ❌ Non          | ❌ Non                   |
+| Fuite     | Hypergéométrique | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
 | Dyscalculie | Normale          | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
-| Genderfluid | Exponentielle    | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
+| Mutation | Exponentielle    | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
 | Daltonien   | Chi-Deux         | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
 
 **Lois à densité (Critère iii)** : 4/8 ✅ (Cauchy, Normale, Exponentielle, Chi-Deux)

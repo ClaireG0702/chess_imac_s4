@@ -1,33 +1,34 @@
 #pragma once
 
-#include "UniformContinuous.hpp"
 #include <cmath>
+#include "UniformContinuous.hpp"
+
 
 namespace Math {
 
 /**
  * Loi exponentielle Exp(λ)
- * 
+ *
  * Modélise le temps d'attente entre événements d'un processus Poisson.
  * Implémentée via inverse transform sampling: X = -ln(U) / λ
- * 
+ *
  * Paramètres:
  * - λ (lambda): taux (intensité > 0)
- * 
+ *
  * Caractéristiques:
  * - Domaine: [0, +∞)
  * - Espérance: 1/λ
  * - Variance: 1/λ²
  * - Sans mémoire: P(X > s+t | X > s) = P(X > t)
- * 
- * Exemple: Genderfluid - Temps d'attente avant changement de type de pièce
- * 
+ *
+ * Exemple: Mutation - Temps d'attente avant changement de type de pièce
+ *
  * Algorithme: Inverse transform sampling
  */
 class Exponential {
 private:
     UniformContinuous m_uniform;
-    double m_lambda;
+    double            m_lambda;
 
 public:
     /**

@@ -84,7 +84,7 @@ private:
     std::vector<EventRecord>                 m_eventHistory;
     int                                      m_turnNumber;
     bool                                     m_daltonianMode;
-    int                                      m_daltonismTurnsRemaining; // Number of turns daltonism remains active
+    int                                      m_daltonismTurnsRemaining;                // Number of turns daltonism remains active
     Color                                    m_originalColors[BOARD_SIZE][BOARD_SIZE]; // Store original colors for restoration
     bool                                     m_colorsSaved;
 
@@ -104,11 +104,11 @@ private:
     // Chaotic event implementations
     void applyRevolutionEvent();
     void applyDyscalculiaEvent();
-    void applyGenderfluidEvent();
+    void applyMutationEvent();
     void applyTransEpidemicEvent();
-    void applyFurryEvent();
-    void applyADHDEvent();
-    void applyAutismEvent();
+    void applyCavalierSauvageEvent();
+    void applyRuptureAttentionEvent();
+    void applyFuitevent();
     void applyDaltonismEvent();
     void disableDaltonism(); // Restore original colors and disable daltonism mode
 };
