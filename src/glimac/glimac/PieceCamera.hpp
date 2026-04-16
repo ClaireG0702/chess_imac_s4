@@ -38,8 +38,9 @@ class PieceCamera {
             glm::mat4 view = glm::mat4(1.f);
             view = glm::rotate(view, glm::radians(m_fAngleY), glm::vec3(1.f, 0.f, 0.f));
             view = glm::rotate(view, glm::radians(m_fAngleX), glm::vec3(0.f, 1.f, 0.f));
-            // Then translate to piece position
-            view = glm::translate(view, -m_position);
+            // Then translate to piece position with a slight height offset
+            glm::vec3 cameraPos = m_position + glm::vec3(0.f, 0.24f, 0.f);
+            view = glm::translate(view, -cameraPos);
             return view;
         }
 };

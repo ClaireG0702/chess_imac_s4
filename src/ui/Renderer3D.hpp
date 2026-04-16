@@ -7,6 +7,7 @@
 #include "Skybox.hpp"
 #include "PieceModel.hpp"
 #include "PieceAnimation.hpp"
+#include "SelectionState.hpp"
 #include "glimac/glimac/Program.hpp"
 #include "glimac/glimac/TrackballCamera.hpp"
 #include "glimac/glimac/PieceCamera.hpp"
@@ -57,6 +58,11 @@ public:
     void animatePieceMovement(int fromRow, int fromCol, int toRow, int toCol, float duration = 0.5f);
     void updateAnimation();
 
+    // Ray-casting and cell selection
+    std::pair<int, int> getCellFromMousePosition(float screenX, float screenY);
+    void                updateHoverableCell(float screenX, float screenY);
+    void                updateCellStates(const GameState& gameState);
+
 private:
     // Executable path for asset loading
     std::string m_executablePath;
@@ -89,11 +95,23 @@ private:
 
     // Board geometry
     GLuint       m_boardVAO, m_boardVBO, m_boardEBO;
+    GLuint       m_boardColorVBO;  // Color buffer for state-based coloring
     unsigned int m_boardIndexCount;
 
     // Piece geometry (reusable cube for all pieces)
     GLuint       m_pieceVAO, m_pieceVBO, m_pieceEBO;
     unsigned int m_pieceIndexCount;
+
+    // Board cell states for selection highlighting
+    std::vector<std::vector<CellState>> m_cellStates;  // 8x8 grid of cell states
+    int                                  m_lastHoveredRow;
+    int                                  m_lastHoveredCol;
+
+    // Board geometry data for ray-casting
+    float m_boardStartX;
+    float m_boardStartZ;
+    float m_squareSize;
+    float m_boardHeight;
 
     // Initialization helpers
     bool createFramebuffer(int width, int height);
@@ -108,6 +126,11 @@ private:
     void      drawPieces(const GameState& gameState);
     void      drawSelectedHighlight(const GameState& gameState);
     void      drawPossibleMovesHighlight(const GameState& gameState);
+
+    // Ray-casting helpers
+    std::pair<glm::vec3, glm::vec3> getRayOriginAndDirection(float screenX, float screenY) const;
+    bool      rayCastSquare(const glm::vec3& rayOrigin, const glm::vec3& rayDir, int row, int col, glm::vec3& intersection) const;
+    glm::vec3 getColorForCellState(CellSelectionState state, bool isLightSquare) const;
 
     bool m_daltonismMode = false;
 };

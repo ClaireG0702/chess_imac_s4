@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <algorithm>
 #include <vector>
+#include <iostream>
 #include "../core/Piece.hpp"
 #include "../core/pieces/Bishop.hpp"
 #include "../core/pieces/King.hpp"
@@ -365,9 +366,101 @@ void Renderer::render3DView(GameState& gameState)
         lastSize = displaySize;
     }
 
-    // Display the framebuffer texture (ImGui uses texture ID as void*)
+    // Get cursor position and window position for ray-casting
+    ImVec2 imagePos = ImGui::GetCursorScreenPos();
+    ImVec2 mousePos = ImGui::GetMousePos();
+    ImVec2 relativeMousePos(mousePos.x - imagePos.x, mousePos.y - imagePos.y);
+    
+    // Check if mouse is within the 3D view
+    bool mouseInView = (relativeMousePos.x >= 0 && relativeMousePos.x < displaySize.x &&
+                        relativeMousePos.y >= 0 && relativeMousePos.y < displaySize.y);
+    
+    // Display the framebuffer texture FIRST
     // Note: OpenGL texture coordinates are flipped vertically for ImGui
-    ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(fbTexture)), displaySize, ImVec2(0, 1), ImVec2(1, 0)); // Flip UV vertically for correct display
+    ImGui::Image(reinterpret_cast<ImTextureID>(static_cast<intptr_t>(fbTexture)), displaySize, ImVec2(0, 1), ImVec2(1, 0));
+    
+    // Check if mouse is hovering over the image
+    bool isImageHovered = ImGui::IsItemHovered();
+    
+    // DEBUG: Always log mouse state
+    static int logCounter = 0;
+    if (logCounter++ % 30 == 0)
+    {
+        std::cout << "MOUSE_STATE: inView=" << mouseInView << " hovered=" << isImageHovered 
+                  << " pos=(" << relativeMousePos.x << "," << relativeMousePos.y << ") clicked=" 
+                  << ImGui::IsMouseClicked(ImGuiMouseButton_Left) << std::endl;
+    }
+    
+    // Handle input only when image is hovered
+    if (isImageHovered && mouseInView)
+    {
+        // Update hoverable cell based on mouse position (for ray-casting)
+        m_renderer3D->updateHoverableCell(relativeMousePos.x, relativeMousePos.y);
+        
+        // Handle left-click for selection and movement
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            auto [row, col] = m_renderer3D->getCellFromMousePosition(relativeMousePos.x, relativeMousePos.y);
+            
+            // DEBUG OUTPUT
+            std::cout << "✓ CLICK DETECTED at relative pos (" << relativeMousePos.x << ", " << relativeMousePos.y << ")" << std::endl;
+            std::cout << "✓ Ray-cast returned cell: (" << row << ", " << col << ")" << std::endl;
+            
+            if (gameState.getBoard().isValidPosition(row, col) && gameState.getStatus() != GameStatus::Victory)
+            {
+                if (!gameState.isCellSelected())
+                {
+                    gameState.selectCell(row, col);
+                    std::cout << "DEBUG: Selected cell (" << row << ", " << col << ")" << std::endl;
+                }
+                else
+                {
+                    auto [selectedRow, selectedCol] = gameState.getSelectedCell();
+                    if (row == selectedRow && col == selectedCol)
+                    {
+                        gameState.deselectCell();
+                        std::cout << "DEBUG: Deselected cell" << std::endl;
+                    }
+                    else
+                    {
+                        if (gameState.makeMove(selectedRow, selectedCol, row, col))
+                        {
+                            // Move successful - animate the piece
+                            m_renderer3D->animatePieceMovement(selectedRow, selectedCol, row, col, 0.8f);
+                            gameState.deselectCell();
+                            std::cout << "DEBUG: Move successful from (" << selectedRow << ", " << selectedCol << ") to (" << row << ", " << col << ")" << std::endl;
+                        }
+                        else
+                        {
+                            // Invalid move - try to select the new cell if it has a piece of current player
+                            gameState.deselectCell();
+                            const Piece* piece = gameState.getBoard().getPieceAt(row, col);
+                            if (piece && piece->getColor() == gameState.getCurrentPlayer())
+                            {
+                                gameState.selectCell(row, col);
+                                std::cout << "DEBUG: Selected new piece at (" << row << ", " << col << ")" << std::endl;
+                            }
+                            else
+                            {
+                                std::cout << "DEBUG: Invalid move or empty cell" << std::endl;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                std::cout << "DEBUG: Invalid position or game status prevents move" << std::endl;
+            }
+        }
+        
+        // Handle right-click to deselect
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+        {
+            gameState.deselectCell();
+            std::cout << "DEBUG: Right-click, deselected" << std::endl;
+        }
+    }
 }
 
 void Renderer::renderEventHistory(GameState& gameState)

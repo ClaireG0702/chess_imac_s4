@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <algorithm>
+#include <limits>
 #include "GLHeaders.hpp"
 #include "core/Board.hpp"
 #include "core/GameState.hpp"
@@ -9,8 +10,18 @@
 #include "glimac/FilePath.hpp"
 
 Renderer3D::Renderer3D()
-    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0), m_useModeledPieces(false)
+    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardColorVBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0), m_useModeledPieces(false), m_lastHoveredRow(-1), m_lastHoveredCol(-1), m_boardStartX(0.0f), m_boardStartZ(0.0f), m_squareSize(1.0f), m_boardHeight(0.4f)
 {
+    // Initialize 8x8 grid of cell states
+    for (int row = 0; row < 8; ++row)
+    {
+        std::vector<CellState> rowStates;
+        for (int col = 0; col < 8; ++col)
+        {
+            rowStates.push_back(CellState(row, col, CellSelectionState::Inactive));
+        }
+        m_cellStates.push_back(rowStates);
+    }
 }
 
 Renderer3D::~Renderer3D()
@@ -23,6 +34,8 @@ Renderer3D::~Renderer3D()
         glDeleteBuffers(1, &m_boardVBO);
     if (m_boardEBO != 0)
         glDeleteBuffers(1, &m_boardEBO);
+    if (m_boardColorVBO != 0)
+        glDeleteBuffers(1, &m_boardColorVBO);
 
     if (m_pieceVAO != 0)
         glDeleteVertexArrays(1, &m_pieceVAO);
@@ -748,6 +761,9 @@ void Renderer3D::render(const GameState& gameState)
         m_pieceCamera.setPiecePosition(piecePosition);
     }
 
+    // Update cell states based on game state
+    updateCellStates(gameState);
+
     // Bind framebuffer and render to texture
     glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
     glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
@@ -789,7 +805,51 @@ void Renderer3D::drawBoard(const GameState& gameState)
     GLint     vpLoc    = glGetUniformLocation(m_boardProgram->getGLId(), "viewProjectionMatrix");
     glUniformMatrix4fv(vpLoc, 1, GL_FALSE, &viewProj[0][0]);
 
+    // Update board colors based on cell states
+    std::vector<float> updatedColors;
+    
+    // First, add colors for the base (20 vertices for base faces)
+    float bgr = 100.0f / 255.0f, bgg = 100.0f / 255.0f, bgb = 100.0f / 255.0f;
+    for (int i = 0; i < 20; ++i)
+    {
+        updatedColors.push_back(bgr);
+        updatedColors.push_back(bgg);
+        updatedColors.push_back(bgb);
+    }
+    
+    // Then add colors for each square based on its state
+    for (int row = 0; row < 8; ++row)
+    {
+        for (int col = 0; col < 8; ++col)
+        {
+            bool isLight = ((row + col) % 2) != 0;
+            glm::vec3 squareColor = getColorForCellState(m_cellStates[row][col].state, isLight);
+            
+            // Each square has 4 vertices with the same color
+            for (int j = 0; j < 4; ++j)
+            {
+                updatedColors.push_back(squareColor.x);
+                updatedColors.push_back(squareColor.y);
+                updatedColors.push_back(squareColor.z);
+            }
+        }
+    }
+    
+    // Update or create the color VBO
+    if (m_boardColorVBO == 0)
+    {
+        glGenBuffers(1, &m_boardColorVBO);
+    }
+    
+    glBindBuffer(GL_ARRAY_BUFFER, m_boardColorVBO);
+    glBufferData(GL_ARRAY_BUFFER, updatedColors.size() * sizeof(float), updatedColors.data(), GL_DYNAMIC_DRAW);
+    
+    // Bind VAO and set color attribute
     glBindVertexArray(m_boardVAO);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    
+    // Draw the board
     glDrawElements(GL_TRIANGLES, m_boardIndexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
@@ -1034,4 +1094,245 @@ void Renderer3D::animatePieceMovement(int fromRow, int fromCol, int toRow, int t
 void Renderer3D::updateAnimation()
 {
     m_pieceAnimationManager.update();
+}
+
+// ===== RAY-CASTING IMPLEMENTATION FOR MOUSE SELECTION =====
+
+std::pair<int, int> Renderer3D::getCellFromMousePosition(float screenX, float screenY)
+{
+    // Get ray origin and direction from mouse position
+    auto [rayOrigin, rayDir] = getRayOriginAndDirection(screenX, screenY);
+    
+    // Test each square on the board
+    float closestDistance = std::numeric_limits<float>::max();
+    int   closestRow = -1, closestCol = -1;
+
+    for (int row = 0; row < 8; ++row)
+    {
+        for (int col = 0; col < 8; ++col)
+        {
+            glm::vec3 intersection;
+            if (rayCastSquare(rayOrigin, rayDir, row, col, intersection))
+            {
+                float distance = glm::distance(rayOrigin, intersection);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestRow = row;
+                    closestCol = col;
+                }
+            }
+        }
+    }
+
+    // DEBUG: Log first hit
+    static int hitCounter = 0;
+    if (closestRow >= 0 && closestCol >= 0 && hitCounter++ % 20 == 0)
+    {
+        std::cout << "✓ HIT DETECTED: cell(" << closestRow << "," << closestCol << ") distance=" << closestDistance << std::endl;
+    }
+
+    return {closestRow, closestCol};
+}
+
+std::pair<glm::vec3, glm::vec3> Renderer3D::getRayOriginAndDirection(float screenX, float screenY) const
+{
+    // Convert screen coordinates to normalized device coordinates (-1 to 1)
+    float ndcX = (2.0f * screenX) / m_framebufferWidth - 1.0f;
+    float ndcY = 1.0f - (2.0f * screenY) / m_framebufferHeight;
+
+    // Get base camera matrix
+    glm::mat4 viewMatrix = (m_cameraMode == CameraMode::Trackball) 
+        ? m_trackballCamera.getViewMatrix() 
+        : m_pieceCamera.getViewMatrix();
+    
+    // Apply board center translation ONLY for Trackball mode (must match getViewProjectionMatrix)
+    if (m_cameraMode == CameraMode::Trackball)
+    {
+        glm::vec3 boardCenter(4.0f, 0.0f, 4.0f);
+        viewMatrix = viewMatrix * glm::translate(glm::mat4(1.0f), -boardCenter);
+    }
+    
+    float aspect = static_cast<float>(m_framebufferWidth) / static_cast<float>(m_framebufferHeight);
+    glm::mat4 projMatrix = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 200.0f);
+    
+    // Create points in NDC space (near and far)
+    glm::vec4 ndcNear(ndcX, ndcY, -1.0f, 1.0f);
+    glm::vec4 ndcFar(ndcX, ndcY, 1.0f, 1.0f);
+    
+    // Transform from NDC to eye space
+    glm::mat4 invProj = glm::inverse(projMatrix);
+    glm::vec4 eyeNear = invProj * ndcNear;
+    glm::vec4 eyeFar = invProj * ndcFar;
+    
+    // Normalize by w coordinate (perspective divide)
+    eyeNear /= eyeNear.w;
+    eyeFar /= eyeFar.w;
+    
+    // Transform from eye space to world space
+    glm::mat4 invView = glm::inverse(viewMatrix);
+    glm::vec4 worldNear = invView * eyeNear;
+    glm::vec4 worldFar = invView * eyeFar;
+    
+    // Ray origin is camera position: transform (0,0,0) from eye space to world space
+    glm::vec3 rayOrigin = glm::vec3(invView * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+    
+    // Ray direction goes from near to far point
+    glm::vec3 rayDir = glm::normalize(glm::vec3(worldFar) - glm::vec3(worldNear));
+    
+    // DEBUG: Log ray information every 10 frames
+    static int logCounter = 0;
+    if (logCounter++ % 5 == 0)
+    {
+        std::cout << "RAYCAST: screenPos(" << screenX << "," << screenY << ") → ndcPos(" << ndcX << "," << ndcY << ")" << std::endl;
+        std::cout << "RAYCAST: rayOrigin(" << rayOrigin.x << "," << rayOrigin.y << "," << rayOrigin.z << ")" << std::endl;
+        std::cout << "RAYCAST: rayDir(" << rayDir.x << "," << rayDir.y << "," << rayDir.z << ")" << std::endl;
+    }
+    
+    return {rayOrigin, rayDir};
+}
+
+bool Renderer3D::rayCastSquare(const glm::vec3& rayOrigin, const glm::vec3& rayDir, int row, int col, glm::vec3& intersection) const
+{
+    // Board plane is at y = m_boardHeight
+    const float boardY = m_boardHeight;
+
+    // Check if ray is not parallel to plane
+    if (glm::abs(rayDir.y) < 0.0001f)
+    {
+        return false;
+    }
+
+    // Calculate t value for intersection with plane
+    float t = (boardY - rayOrigin.y) / rayDir.y;
+
+    // Ray should be pointing towards the board (t > 0)
+    if (t < 0.001f)
+    {
+        return false;
+    }
+
+    // Calculate intersection point
+    intersection = rayOrigin + t * rayDir;
+
+    // The intersection is already in WORLD coordinates (0-8 range for board)
+    // No transformation needed - the ray-plane intersection gives us raw world coords
+    glm::vec3& intersectionRaw = intersection;  // Just a reference, no transformation needed
+
+    // Calculate square bounds in raw coordinates (0-8)
+    float x = m_boardStartX + col * m_squareSize;
+    float z = m_boardStartZ + (7 - row) * m_squareSize;
+
+    // Check if intersection is within square bounds
+    if (intersectionRaw.x >= x && intersectionRaw.x <= x + m_squareSize &&
+        intersectionRaw.z >= z && intersectionRaw.z <= z + m_squareSize)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+void Renderer3D::updateHoverableCell(float screenX, float screenY)
+{
+    auto [row, col] = getCellFromMousePosition(screenX, screenY);
+
+    // Reset all cells to Inactive
+    for (int r = 0; r < 8; ++r)
+    {
+        for (int c = 0; c < 8; ++c)
+        {
+            m_cellStates[r][c].state = CellSelectionState::Inactive;
+        }
+    }
+
+    // Set hovered cell to Hoverable
+    if (row >= 0 && row < 8 && col >= 0 && col < 8)
+    {
+        m_cellStates[row][col].state = CellSelectionState::Hoverable;
+        m_lastHoveredRow = row;
+        m_lastHoveredCol = col;
+    }
+    else
+    {
+        m_lastHoveredRow = -1;
+        m_lastHoveredCol = -1;
+    }
+}
+
+void Renderer3D::updateCellStates(const GameState& gameState)
+{
+    // First, reset all cells to inactive
+    for (int row = 0; row < 8; ++row)
+    {
+        for (int col = 0; col < 8; ++col)
+        {
+            m_cellStates[row][col].state = CellSelectionState::Inactive;
+        }
+    }
+
+    // If no cell is selected, only mark hoverable cell
+    if (!gameState.isCellSelected())
+    {
+        if (m_lastHoveredRow >= 0 && m_lastHoveredCol >= 0)
+        {
+            m_cellStates[m_lastHoveredRow][m_lastHoveredCol].state = CellSelectionState::Hoverable;
+        }
+        return;
+    }
+
+    // Get selected cell
+    auto [selectedRow, selectedCol] = gameState.getSelectedCell();
+
+    // Mark selected cell
+    m_cellStates[selectedRow][selectedCol].state = CellSelectionState::Selected;
+
+    // Get possible moves from selected piece
+    const Board& board = gameState.getBoard();
+    const Piece* selectedPiece = board.getPieceAt(selectedRow, selectedCol);
+    if (selectedPiece)
+    {
+        std::vector<std::pair<int, int>> possibleMoves = selectedPiece->getPossibleMoves(selectedRow, selectedCol, board);
+        for (const auto& [moveRow, moveCol] : possibleMoves)
+        {
+            m_cellStates[moveRow][moveCol].state = CellSelectionState::Selectable;
+        }
+    }
+
+    // Mark hovered cell if it's not already selected or selectable
+    if (m_lastHoveredRow >= 0 && m_lastHoveredCol >= 0 &&
+        m_cellStates[m_lastHoveredRow][m_lastHoveredCol].state == CellSelectionState::Inactive)
+    {
+        m_cellStates[m_lastHoveredRow][m_lastHoveredCol].state = CellSelectionState::Hoverable;
+    }
+}
+
+glm::vec3 Renderer3D::getColorForCellState(CellSelectionState state, bool isLightSquare) const
+{
+    // Base colors for light and dark squares (from 2D renderer)
+    glm::vec3 baseLightColor(173.0f / 255.0f, 232.0f / 255.0f, 244.0f / 255.0f);  // Light cyan
+    glm::vec3 baseDarkColor(2.0f / 255.0f, 62.0f / 255.0f, 99.0f / 255.0f);       // Dark blue
+
+    glm::vec3 baseColor = isLightSquare ? baseLightColor : baseDarkColor;
+
+    switch (state)
+    {
+        case CellSelectionState::Inactive:
+            return baseColor;
+
+        case CellSelectionState::Hoverable:
+            // Subtle highlight when hovering
+            return baseColor * 1.2f;
+
+        case CellSelectionState::Selectable:
+            // Green highlight for possible moves (from 2D renderer green: 0, 255, 0)
+            return glm::vec3(0.0f, 1.0f, 0.0f);
+
+        case CellSelectionState::Selected:
+            // Yellow highlight for selected cell (from 2D renderer yellow: 255, 255, 0)
+            return glm::vec3(1.0f, 1.0f, 0.0f);
+
+        default:
+            return baseColor;
+    }
 }

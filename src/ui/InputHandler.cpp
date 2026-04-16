@@ -7,15 +7,9 @@ InputHandler::InputHandler(GameState& gameState, Renderer& renderer) : m_gameSta
 void InputHandler::handleInput()
 {
     handleCameraInput();
-
-    // Handle right-click to deselect (only if not dragging camera)
-    if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) && ImGui::IsWindowHovered())
-    {
-        m_gameState.deselectCell();
-        return;
-    }
-
-    handleMouseClick();
+    
+    // 3D view interaction is now handled in render3DView()
+    // Camera controls and 2D board interactions are handled here and in the respective functions
 }
 
 void InputHandler::handleCameraInput()
@@ -121,52 +115,6 @@ void InputHandler::handleCameraInput()
 
 void InputHandler::handleMouseClick()
 {
-    if (!ImGui::IsMouseClicked(0))
-        return;
-    if (!ImGui::IsWindowHovered())
-        return;
-
-    // Don't allow any moves if game is over (Victory)
-    if (m_gameState.getStatus() == GameStatus::Victory)
-    {
-        return;
-    }
-
-    ImVec2 mousePos = ImGui::GetMousePos();
-    auto [row, col] = m_renderer.getCellFromMousePosition(mousePos);
-
-    if (!m_gameState.getBoard().isValidPosition(row, col))
-        return;
-
-    if (!m_gameState.isCellSelected())
-    {
-        m_gameState.selectCell(row, col);
-    }
-    else
-    {
-        auto [selectedRow, selectedCol] = m_gameState.getSelectedCell();
-        if (row == selectedRow && col == selectedCol)
-        {
-            m_gameState.deselectCell();
-        }
-        else
-        {
-            if (m_gameState.makeMove(selectedRow, selectedCol, row, col))
-            {
-                // Move successful - animate the piece
-                Renderer3D* renderer3D = m_renderer.getRenderer3D();
-                if (renderer3D)
-                {
-                    renderer3D->animatePieceMovement(selectedRow, selectedCol, row, col, 1.8f);
-                }
-                m_gameState.deselectCell();
-            }
-            else
-            {
-                // Invalid move, keep the cell selected
-                m_gameState.deselectCell();
-                m_gameState.selectCell(row, col); // Select the new cell if it's valid
-            }
-        }
-    }
+    // 3D view interaction is now handled in render3DView()
+    // This function is kept for potential 2D board interactions
 }
