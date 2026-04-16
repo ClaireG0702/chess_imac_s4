@@ -914,3 +914,77 @@ void GameState::disableDaltonism()
     m_daltonismTurnsRemaining = 0;
     m_colorsSaved             = false;
 }
+
+ClickResult GameState::handleCellClick(int row, int col)
+{
+    // Validate position
+    if (!m_board.isValidPosition(row, col))
+    {
+        return ClickResult(ClickAction::None, true, "Invalid position");
+    }
+
+    Piece* clickedPiece = m_board.getPieceAt(row, col);
+
+    // Case 1: No piece currently selected
+    if (!isCellSelected())
+    {
+        // Try to select the clicked cell
+        if (!clickedPiece)
+        {
+            return ClickResult(ClickAction::None, true, "Empty cell");
+        }
+
+        // Check if piece belongs to current player (or any piece in Daltonism mode)
+        if (!m_daltonianMode && clickedPiece->getColor() != m_currentPlayer)
+        {
+            return ClickResult(ClickAction::None, true, "Wrong color - not your piece");
+        }
+
+        // Select the piece
+        selectCell(row, col);
+        return ClickResult(ClickAction::Selected);
+    }
+
+    // Case 2: A piece is currently selected
+    auto [selectedRow, selectedCol] = getSelectedCell();
+
+    // Case 2a: Clicked on the same cell → deselect
+    if (row == selectedRow && col == selectedCol)
+    {
+        deselectCell();
+        return ClickResult(ClickAction::Deselected);
+    }
+
+    // Case 2b: Try to move to the clicked cell
+    if (isValidMove(selectedRow, selectedCol, row, col))
+    {
+        bool moveMade = makeMove(selectedRow, selectedCol, row, col);
+        if (moveMade)
+        {
+            return ClickResult(ClickAction::MoveExecuted);
+        }
+        else
+        {
+            return ClickResult(ClickAction::None, true, "Move execution failed");
+        }
+    }
+
+    // Case 2c: Invalid move - deselect and consider new selection
+    deselectCell();
+
+    if (!clickedPiece)
+    {
+        return ClickResult(ClickAction::None, true, "Invalid move - clicked empty cell");
+    }
+
+    // Try to select the new piece if it belongs to current player
+    if (m_daltonianMode || clickedPiece->getColor() == m_currentPlayer)
+    {
+        selectCell(row, col);
+        return ClickResult(ClickAction::Selected);
+    }
+    else
+    {
+        return ClickResult(ClickAction::None, true, "Invalid move - wrong color");
+    }
+}

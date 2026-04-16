@@ -28,6 +28,24 @@ enum class GameMode : std::uint8_t {
     Chaotic
 };
 
+// Result of a cell click action - what actually happened
+enum class ClickAction : std::uint8_t {
+    None,            // Click had no effect or invalid position
+    Deselected,      // Piece was deselected
+    Selected,        // Piece was selected
+    MoveExecuted     // Move was executed
+};
+
+// Result of handling a cell click
+struct ClickResult {
+    ClickAction action;
+    bool        hasError;
+    std::string errorMessage;  // For validation errors: "Wrong color", "Invalid move", etc.
+
+    ClickResult(ClickAction a = ClickAction::None, bool error = false, const std::string& msg = "")
+        : action(a), hasError(error), errorMessage(msg) {}
+};
+
 struct EventRecord {
     std::string eventName;
     int         turnNumber;
@@ -53,6 +71,10 @@ public:
     void                deselectCell();
     bool                isCellSelected() const { return m_selectedRow != INVALID_POSITION; }
     std::pair<int, int> getSelectedCell() const { return {m_selectedRow, m_selectedCol}; }
+
+    // Unified cell click handler for 2D and 3D views
+    // Returns structured result with action and optional error message
+    ClickResult handleCellClick(int row, int col);
 
     void                promotePawn(int row, int col, PieceType newType);
     bool                isPromotionPending() const { return m_promotionPending; }

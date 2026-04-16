@@ -107,11 +107,11 @@ private:
     int                                  m_lastHoveredRow;
     int                                  m_lastHoveredCol;
 
-    // Board geometry data for ray-casting
-    float m_boardStartX;
-    float m_boardStartZ;
-    float m_squareSize;
-    float m_boardHeight;
+    // Board geometry constants
+    static constexpr float BOARD_START_X = 0.0f;
+    static constexpr float BOARD_START_Z = 0.0f;
+    static constexpr float SQUARE_SIZE = 1.0f;
+    static constexpr float BOARD_HEIGHT = 0.4f;
 
     // Initialization helpers
     bool createFramebuffer(int width, int height);

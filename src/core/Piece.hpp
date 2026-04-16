@@ -72,4 +72,11 @@ protected:
     bool         m_hasMoved;
 
     bool isPathClear(int fromRow, int fromCol, int toRow, int toCol, const Board& board) const;
+
+    // Helper methods to reduce code duplication
+    std::vector<std::pair<int, int>> getDirectionalMoves(
+        int row, int col, const Board& board,
+        const std::vector<std::array<int, 2>>& directions) const;
+    
+    bool canCaptureOrEmpty(int row, int col, const Board& board) const;
 };

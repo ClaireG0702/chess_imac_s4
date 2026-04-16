@@ -47,3 +47,36 @@ void Piece::toString() const {
     }
     std::cout << "Piece: " << symbol << " Color: " << (m_color == Color::White ? "White" : "Black") << '\n';
 }
+
+std::vector<std::pair<int, int>> Piece::getDirectionalMoves(
+    int row, int col, const Board& board,
+    const std::vector<std::array<int, 2>>& directions) const {
+    std::vector<std::pair<int, int>> moves;
+    
+    for (const auto& dir : directions) {
+        int newRow = row + dir[0];
+        int newCol = col + dir[1];
+        
+        while (board.isValidPosition(newRow, newCol)) {
+            if (!canCaptureOrEmpty(newRow, newCol, board)) {
+                break;  // Blocked by own piece
+            }
+            moves.push_back({newRow, newCol});
+            
+            Piece* piece = board.getPieceAt(newRow, newCol);
+            if (piece && piece->getColor() != m_color) {
+                break;  // Captured opponent, can't go further
+            }
+            
+            newRow += dir[0];
+            newCol += dir[1];
+        }
+    }
+    
+    return moves;
+}
+
+bool Piece::canCaptureOrEmpty(int row, int col, const Board& board) const {
+    Piece* targetPiece = board.getPieceAt(row, col);
+    return !targetPiece || targetPiece->getColor() != m_color;
+}

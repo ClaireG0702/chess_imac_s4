@@ -25,33 +25,13 @@ bool Queen::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Bo
 }
 
 std::vector<std::pair<int, int>> Queen::getPossibleMoves(int row, int col, const Board& board) const {
-    std::vector<std::pair<int, int>> moves;
-    
-    // Directions : haut, bas, gauche, droite, et les 4 diagonales
-    const std::array<std::array<int, 2>, 8> directions = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1},
-        {-1, -1}, {-1, 1}, {1, -1}, {1, 1}}};
-
-    for (const auto& dir : directions) {
-        int newRow = row + dir[0];
-        int newCol = col + dir[1];
-        
-        while (board.isValidPosition(newRow, newCol)) {
-            Piece* piece = board.getPieceAt(newRow, newCol);
-            if (!piece) {
-                moves.push_back({newRow, newCol});
-            } else {
-                if (piece->getColor() != m_color) {
-                    moves.push_back({newRow, newCol});
-                }
-                break;
-            }
-            newRow += dir[0];
-            newCol += dir[1];
-        }
-    }
-    
-    return moves;
+    // Directions: horizontal, vertical, and diagonals (all 8 directions)
+    const std::vector<std::array<int, 2>> directions = {
+        {{-1, 0}, {1, 0}, {0, -1}, {0, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 1}}
+    };
+    return getDirectionalMoves(row, col, board, directions);
 }
+
 std::unique_ptr<Piece> Queen::clone() const {
     auto cloned = std::make_unique<Queen>(m_color);
     cloned->m_hasMoved = m_hasMoved;

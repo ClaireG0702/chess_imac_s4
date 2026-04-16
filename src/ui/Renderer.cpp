@@ -173,16 +173,8 @@ void Renderer::renderCell(GameState& gameState, int x, int y, ImVec2 size, const
 
     if (ImGui::Button(symbol, size))
     {
-        if (isPossibleMove && gameState.isCellSelected())
-        {
-            auto [fromRow, fromCol] = gameState.getSelectedCell();
-            gameState.makeMove(fromRow, fromCol, y, x);
-            gameState.deselectCell();
-        }
-        else
-        {
-            gameState.selectCell(y, x);
-        }
+        // Use unified cell click handler
+        gameState.handleCellClick(y, x);
     }
 
     if (piece)
@@ -406,51 +398,41 @@ void Renderer::render3DView(GameState& gameState)
             std::cout << "✓ CLICK DETECTED at relative pos (" << relativeMousePos.x << ", " << relativeMousePos.y << ")" << std::endl;
             std::cout << "✓ Ray-cast returned cell: (" << row << ", " << col << ")" << std::endl;
             
-            if (gameState.getBoard().isValidPosition(row, col) && gameState.getStatus() != GameStatus::Victory)
-            {
-                if (!gameState.isCellSelected())
-                {
-                    gameState.selectCell(row, col);
-                    std::cout << "DEBUG: Selected cell (" << row << ", " << col << ")" << std::endl;
-                }
-                else
-                {
-                    auto [selectedRow, selectedCol] = gameState.getSelectedCell();
-                    if (row == selectedRow && col == selectedCol)
-                    {
-                        gameState.deselectCell();
-                        std::cout << "DEBUG: Deselected cell" << std::endl;
-                    }
-                    else
-                    {
-                        if (gameState.makeMove(selectedRow, selectedCol, row, col))
-                        {
-                            // Move successful - animate the piece
-                            m_renderer3D->animatePieceMovement(selectedRow, selectedCol, row, col, 0.8f);
-                            gameState.deselectCell();
-                            std::cout << "DEBUG: Move successful from (" << selectedRow << ", " << selectedCol << ") to (" << row << ", " << col << ")" << std::endl;
-                        }
-                        else
-                        {
-                            // Invalid move - try to select the new cell if it has a piece of current player
-                            gameState.deselectCell();
-                            const Piece* piece = gameState.getBoard().getPieceAt(row, col);
-                            if (piece && piece->getColor() == gameState.getCurrentPlayer())
-                            {
-                                gameState.selectCell(row, col);
-                                std::cout << "DEBUG: Selected new piece at (" << row << ", " << col << ")" << std::endl;
-                            }
-                            else
-                            {
-                                std::cout << "DEBUG: Invalid move or empty cell" << std::endl;
-                            }
-                        }
-                    }
-                }
-            }
-            else
+            if (!gameState.getBoard().isValidPosition(row, col) || gameState.getStatus() == GameStatus::Victory)
             {
                 std::cout << "DEBUG: Invalid position or game status prevents move" << std::endl;
+                return; // Early exit for invalid position or victory
+            }
+
+            // Store selected state before click to know if we need animation
+            auto [selectedRow, selectedCol] = gameState.getSelectedCell();
+            bool wasSelected = gameState.isCellSelected();
+
+            // Use unified cell click handler
+            ClickResult result = gameState.handleCellClick(row, col);
+
+            // If move was executed, animate it
+            if (result.action == ClickAction::MoveExecuted && wasSelected)
+            {
+                m_renderer3D->animatePieceMovement(selectedRow, selectedCol, row, col, 0.8f);
+            }
+
+            // Debug output
+            switch (result.action)
+            {
+                case ClickAction::MoveExecuted:
+                    std::cout << "DEBUG: Move executed" << std::endl;
+                    break;
+                case ClickAction::Selected:
+                    std::cout << "DEBUG: Selected cell (" << row << ", " << col << ")" << std::endl;
+                    break;
+                case ClickAction::Deselected:
+                    std::cout << "DEBUG: Deselected cell" << std::endl;
+                    break;
+                case ClickAction::None:
+                    if (result.hasError)
+                        std::cout << "DEBUG: Click error: " << result.errorMessage << std::endl;
+                    break;
             }
         }
         

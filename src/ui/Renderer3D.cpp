@@ -10,7 +10,7 @@
 #include "glimac/FilePath.hpp"
 
 Renderer3D::Renderer3D()
-    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardColorVBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0), m_useModeledPieces(false), m_lastHoveredRow(-1), m_lastHoveredCol(-1), m_boardStartX(0.0f), m_boardStartZ(0.0f), m_squareSize(1.0f), m_boardHeight(0.4f)
+    : m_framebuffer(0), m_framebufferTexture(0), m_depthRenderbuffer(0), m_framebufferWidth(800), m_framebufferHeight(800), m_cameraMode(CameraMode::Trackball), m_trackballCamera(15.0f, 0.0f, 30.0f), m_boardVAO(0), m_boardVBO(0), m_boardEBO(0), m_boardColorVBO(0), m_boardIndexCount(0), m_pieceVAO(0), m_pieceVBO(0), m_pieceEBO(0), m_pieceIndexCount(0), m_useModeledPieces(false), m_lastHoveredRow(-1), m_lastHoveredCol(-1)
 {
     // Initialize 8x8 grid of cell states
     for (int row = 0; row < 8; ++row)
@@ -194,12 +194,14 @@ bool Renderer3D::createBoardGeometry()
     std::vector<float>        colors;
     std::vector<unsigned int> indices;
 
-    float squareSize   = 1.0f;
-    float boardStartX  = 0.0f;
-    float boardStartZ  = 0.0f;
-    float boardHeight  = 0.4f;   // Thicker board surface
+    // Use static board geometry constants
+    float squareSize   = SQUARE_SIZE;
+    float boardStartX  = BOARD_START_X;
+    float boardStartZ  = BOARD_START_Z;
+    float boardHeight  = BOARD_HEIGHT;   // Thicker board surface
     float baseHeight   = 0.0f;   // Bottom of base
     float borderWidth  = 0.3f;   // Width of border around board
+
 
     unsigned int vertexCount = 0;
 
@@ -1194,8 +1196,8 @@ std::pair<glm::vec3, glm::vec3> Renderer3D::getRayOriginAndDirection(float scree
 
 bool Renderer3D::rayCastSquare(const glm::vec3& rayOrigin, const glm::vec3& rayDir, int row, int col, glm::vec3& intersection) const
 {
-    // Board plane is at y = m_boardHeight
-    const float boardY = m_boardHeight;
+    // Board plane is at y = BOARD_HEIGHT
+    const float boardY = BOARD_HEIGHT;
 
     // Check if ray is not parallel to plane
     if (glm::abs(rayDir.y) < 0.0001f)
@@ -1220,12 +1222,12 @@ bool Renderer3D::rayCastSquare(const glm::vec3& rayOrigin, const glm::vec3& rayD
     glm::vec3& intersectionRaw = intersection;  // Just a reference, no transformation needed
 
     // Calculate square bounds in raw coordinates (0-8)
-    float x = m_boardStartX + col * m_squareSize;
-    float z = m_boardStartZ + (7 - row) * m_squareSize;
+    float x = BOARD_START_X + col * SQUARE_SIZE;
+    float z = BOARD_START_Z + (7 - row) * SQUARE_SIZE;
 
     // Check if intersection is within square bounds
-    if (intersectionRaw.x >= x && intersectionRaw.x <= x + m_squareSize &&
-        intersectionRaw.z >= z && intersectionRaw.z <= z + m_squareSize)
+    if (intersectionRaw.x >= x && intersectionRaw.x <= x + SQUARE_SIZE &&
+        intersectionRaw.z >= z && intersectionRaw.z <= z + SQUARE_SIZE)
     {
         return true;
     }

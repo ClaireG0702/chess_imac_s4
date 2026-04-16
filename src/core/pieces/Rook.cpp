@@ -19,34 +19,11 @@ bool Rook::isValidMove(int fromRow, int fromCol, int toRow, int toCol, const Boa
 }
 
 std::vector<std::pair<int, int>> Rook::getPossibleMoves(int row, int col, const Board& board) const {
-    std::vector<std::pair<int, int>> moves;
-    
-    // Directions : haut, bas, gauche, droite
-    const std::array<std::array<int, 2>, 4> directions = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
-    
-    for (const auto& dir : directions) {
-        int newRow = row + dir[0];
-        int newCol = col + dir[1];
-        
-        while (board.isValidPosition(newRow, newCol)) {
-            Piece* piece = board.getPieceAt(newRow, newCol);
-            
-            if (!piece) {
-                moves.push_back({newRow, newCol});
-            } else {
-                if (piece->getColor() != m_color) {
-                    moves.push_back({newRow, newCol});
-                }
-                break;
-            }
-            
-            newRow += dir[0];
-            newCol += dir[1];
-        }
-    }
-    
-    return moves;
+    // Directions : up, down, left, right
+    const std::vector<std::array<int, 2>> directions = {{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}};
+    return getDirectionalMoves(row, col, board, directions);
 }
+
 std::unique_ptr<Piece> Rook::clone() const {
     auto cloned = std::make_unique<Rook>(m_color);
     cloned->m_hasMoved = m_hasMoved;

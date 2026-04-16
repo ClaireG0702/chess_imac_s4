@@ -1,7 +1,7 @@
 #include "Pawn.hpp"
 #include "../Board.hpp"
 #include <cmath>
-#include <utility>
+
 
 Pawn::Pawn(Color color) : Piece(color, PieceType::Pawn) {}
 
