@@ -44,7 +44,7 @@ static const char* getPieceSymbol(const Piece* piece)
     return "?";
 }
 
-Renderer::Renderer() : m_cellSize(95.0f), m_boardOffset(0.f, 0.f), m_lightCellColor(IM_COL32(173, 232, 244, 255)), m_darkCellColor(IM_COL32(2, 62, 99, 138)), m_selectedColor(IM_COL32(255, 255, 0, 128)), m_possibleMoveColor(IM_COL32(0, 255, 0, 128)) {}
+Renderer::Renderer() : m_cellSize(95.0f), m_boardOffset(0.f, 0.f), m_lightCellColor(IM_COL32(200, 200, 200, 255)), m_darkCellColor(IM_COL32(80, 80, 80, 255)), m_selectedColor(IM_COL32(255, 255, 0, 128)), m_possibleMoveColor(IM_COL32(0, 255, 0, 128)) {}
 
 bool Renderer::initialize(const std::string& executablePath)
 {
@@ -207,7 +207,9 @@ void Renderer::renderGameStatus(GameState& gameState)
     ImGui::Spacing();
 
     const char* currentPlayer = (gameState.getCurrentPlayer() == Color::White) ? "Blancs" : "Noirs";
+    ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(33, 0, 33, 255));
     ImGui::Text("Tour de : %s", currentPlayer);
+    ImGui::PopStyleColor();
 
     switch (gameState.getStatus())
     {

@@ -191,7 +191,6 @@ bool Renderer3D::createBoardGeometry()
 {
     // Create 8x8 board with quads (light/dark squares) + simple border
     std::vector<float>        vertices;
-    std::vector<float>        colors;
     std::vector<unsigned int> indices;
 
     // Use static board geometry constants
@@ -205,9 +204,6 @@ bool Renderer3D::createBoardGeometry()
 
     unsigned int vertexCount = 0;
 
-    // Border gray color
-    float bgr = 100.0f / 255.0f, bgg = 100.0f / 255.0f, bgb = 100.0f / 255.0f;
-
     // ===== CREATE SIMPLE FLAT BASE PLATFORM =====
     float baseLeft   = boardStartX - borderWidth;
     float baseRight  = boardStartX + 8.0f * squareSize + borderWidth;
@@ -218,30 +214,18 @@ bool Renderer3D::createBoardGeometry()
     vertices.push_back(baseLeft);
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr);
-    colors.push_back(bgg);
-    colors.push_back(bgb);
 
     vertices.push_back(baseRight);
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr);
-    colors.push_back(bgg);
-    colors.push_back(bgb);
 
     vertices.push_back(baseRight);
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr);
-    colors.push_back(bgg);
-    colors.push_back(bgb);
 
     vertices.push_back(baseLeft);
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr);
-    colors.push_back(bgg);
-    colors.push_back(bgb);
 
     // Base quad indices (2 triangles for top face)
     indices.push_back(0);
@@ -258,30 +242,18 @@ bool Renderer3D::createBoardGeometry()
     vertices.push_back(baseLeft);   // 4
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseRight);  // 5
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseRight);  // 6
     vertices.push_back(baseHeight - 0.5f);  // Bottom
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     vertices.push_back(baseLeft);   // 7
     vertices.push_back(baseHeight - 0.5f);  // Bottom
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     // Front face indices
     indices.push_back(4);
@@ -296,30 +268,18 @@ bool Renderer3D::createBoardGeometry()
     vertices.push_back(baseRight);  // 8
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseLeft);   // 9
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseLeft);   // 10
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     vertices.push_back(baseRight);  // 11
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     // Back face indices
     indices.push_back(8);
@@ -334,30 +294,18 @@ bool Renderer3D::createBoardGeometry()
     vertices.push_back(baseLeft);   // 12
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseLeft);   // 13
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseLeft);   // 14
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     vertices.push_back(baseLeft);   // 15
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     // Left face indices
     indices.push_back(12);
@@ -372,30 +320,18 @@ bool Renderer3D::createBoardGeometry()
     vertices.push_back(baseRight);  // 16
     vertices.push_back(baseHeight);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseRight);  // 17
     vertices.push_back(baseHeight);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.8f);
-    colors.push_back(bgg * 0.8f);
-    colors.push_back(bgb * 0.8f);
 
     vertices.push_back(baseRight);  // 18
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseBottom);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     vertices.push_back(baseRight);  // 19
     vertices.push_back(baseHeight - 0.5f);
     vertices.push_back(baseTop);
-    colors.push_back(bgr * 0.6f);
-    colors.push_back(bgg * 0.6f);
-    colors.push_back(bgb * 0.6f);
 
     // Right face indices
     indices.push_back(16);
@@ -416,52 +352,22 @@ bool Renderer3D::createBoardGeometry()
             float z = boardStartZ + (7 - row) * squareSize;
             float y = baseHeight + 0.001f;  // Just above the base to avoid z-fighting
 
-            // Determine color: light (white-ish) or dark (blue-ish)
-            bool  isLight = ((row + col) % 2) != 0;
-            float r, g, b;
-            if (isLight)
-            {
-                // Light cyan-ish
-                r = 173.0f / 255.0f;
-                g = 232.0f / 255.0f;
-                b = 244.0f / 255.0f;
-            }
-            else
-            {
-                // Dark blue
-                r = 2.0f / 255.0f;
-                g = 62.0f / 255.0f;
-                b = 99.0f / 255.0f;
-            }
-
             // 4 vertices per square (just a flat quad)
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z);
-            colors.push_back(r);
-            colors.push_back(g);
-            colors.push_back(b);
 
             vertices.push_back(x + squareSize);
             vertices.push_back(y);
             vertices.push_back(z);
-            colors.push_back(r);
-            colors.push_back(g);
-            colors.push_back(b);
 
             vertices.push_back(x + squareSize);
             vertices.push_back(y);
             vertices.push_back(z + squareSize);
-            colors.push_back(r);
-            colors.push_back(g);
-            colors.push_back(b);
 
             vertices.push_back(x);
             vertices.push_back(y);
             vertices.push_back(z + squareSize);
-            colors.push_back(r);
-            colors.push_back(g);
-            colors.push_back(b);
 
             // Indices for this square (2 triangles)
             indices.push_back(vertexCount + 0);
@@ -484,15 +390,9 @@ bool Renderer3D::createBoardGeometry()
 
     glBindVertexArray(m_boardVAO);
 
-    // Position buffer (interleaved with color for simplicity we use separate buffers)
+    // Position buffer
     glBindBuffer(GL_ARRAY_BUFFER, m_boardVBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    // Color data
-    GLuint colorVBO;
-    glGenBuffers(1, &colorVBO);
-    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(float), colors.data(), GL_STATIC_DRAW);
 
     // Index buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_boardEBO);
@@ -502,11 +402,6 @@ bool Renderer3D::createBoardGeometry()
     glBindBuffer(GL_ARRAY_BUFFER, m_boardVBO);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    // Color attribute
-    glBindBuffer(GL_ARRAY_BUFFER, colorVBO);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -811,7 +706,7 @@ void Renderer3D::drawBoard(const GameState& gameState)
     std::vector<float> updatedColors;
     
     // First, add colors for the base (20 vertices for base faces)
-    float bgr = 100.0f / 255.0f, bgg = 100.0f / 255.0f, bgb = 100.0f / 255.0f;
+    float bgr = 33.0f / 255.0f, bgg = 0.0f / 255.0f, bgb = 33.0f / 255.0f;
     for (int i = 0; i < 20; ++i)
     {
         updatedColors.push_back(bgr);
@@ -1312,8 +1207,8 @@ void Renderer3D::updateCellStates(const GameState& gameState)
 glm::vec3 Renderer3D::getColorForCellState(CellSelectionState state, bool isLightSquare) const
 {
     // Base colors for light and dark squares (from 2D renderer)
-    glm::vec3 baseLightColor(173.0f / 255.0f, 232.0f / 255.0f, 244.0f / 255.0f);  // Light cyan
-    glm::vec3 baseDarkColor(2.0f / 255.0f, 62.0f / 255.0f, 99.0f / 255.0f);       // Dark blue
+    glm::vec3 baseLightColor(200.0f / 255.0f, 200.0f / 255.0f, 200.0f / 255.0f);  // Light gray
+    glm::vec3 baseDarkColor(80.0f / 255.0f, 80.0f / 255.0f, 80.0f / 255.0f);      // Dark gray
 
     glm::vec3 baseColor = isLightSquare ? baseLightColor : baseDarkColor;
 

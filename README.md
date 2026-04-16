@@ -1,312 +1,475 @@
-# 🎲 Jeu d'Échecs Chaotique
+# Jeu d'Échecs C++
 
-Un jeu d'échecs augmenté avec des événements chaotiques générés par des lois de probabilité distinctes. Chaque événement transforme le gameplay de manière imprévisible mais contrôlée.
+Un jeu d'échecs avec deux modes de jeu :
 
----
+- **Mode Classique** : Échecs traditionnels
+- **Mode Chaotique** : Échecs augmentés avec 8 événements aléatoires générés par des lois de probabilité
 
-## 🎲 Les 8 Événements Chaotiques
+## Table des matières
 
-### 🎲 **Révolution** — Des pions changent de camp
-
-#### 🎮 Description du Jeu
-
-De temps en temps, **2-3 pions (Pawn) changent de camp**. Ces pions, sélectionnés aléatoirement sans remise, deviennent des pions ennemis avec toutes les implications tactiques.
-
-**Lois** : Binomiale + Hypergéométrique
-
-#### 🧠 Pourquoi la Binomiale ?
-
-La **Binomial distribution** modélise :
-
-> **"Combien d'individus dans un groupe subissent un changement"**
-
-C'est exactement le cas ici :
-
-- Chaque pion a une probabilité `p` de "se rebeller"
-- Tu veux un nombre variable mais contrôlé
-
-**✔ Avantage gameplay** :
-
-- Évite un résultat fixe (toujours 2 ou 3 pions)
-- Produit naturellement des petits nombres (si p faible)
-- Crée de la tension : "combien vont vraiment se rebeller ?"
-
-#### 🧠 Pourquoi l'Hypergéométrique ?
-
-La **Hypergeometric distribution** modélise :
-
-> **Tirage sans remise dans une population finie**
-
-Dans le jeu :
-
-- Tu ne peux pas sélectionner deux fois le même pion
-- Le plateau est un ensemble fini (16 pions max par camp)
-
-**✔ Avantage gameplay** :
-
-- Résultat cohérent (pas de doublons)
-- Plus réaliste qu'un tirage indépendant
-- Élimine les pions un par un jusqu'à atteindre le nombre requis
+- [Vue d'ensemble](#vue-densemble)
+- [Fonctionnalités](#fonctionnalités)
+- [Mode de jeu classique](#mode-de-jeu-classique)
+- [Mode chaotique](#mode-chaotique)
+- [Architecture](#architecture)
+- [Installation et compilation](#installation-et-compilation)
+- [Guide de jeu](#guide-de-jeu)
+- [Contrôles](#contrôles)
+- [Dépendances](#dépendances)
+- [Licence](#licence)
 
 ---
 
-### 🔁 **Swap Reine ↔ Pion** — Des pions deviennent des dames et inversement
+## Vue d'ensemble
 
-#### 🎮 Description du Jeu
+### Présentation générale
 
-De temps en temps, **un pion aléatoire est choisi parmi tous les Pawn et Queen**. Celui-ci change immédiatement pour devenir de l'autre type : un Pawn devient Queen, ou une Queen devient Pawn.
+Ce projet est une implémentation complète d'un jeu d'échecs en **C++20** avec une interface graphique moderne utilisant **OpenGL 3.3** et **ImGui**. Le jeu propose une expérience immersive avec :
 
-**Lois** : Poisson + Uniforme Discrète
+- **Rendu 3D** avec skybox et modèles GLTF
+- **Interface intuitive** en temps réel
+- **Validation des mouvements** légaux selon les règles d'échecs
+- **Deux modes de jeu** pour différents styles de gameplay
 
-#### 🧠 Pourquoi la Poisson ?
+### Contexte académique
 
-La **Poisson distribution** modélise :
-
-> **Le nombre d'événements rares dans un intervalle**
-
-Ici :
-
-- L'événement est rare
-- Tu veux qu'il arrive "de temps en temps", sans régularité
-
-**✔ Avantage gameplay** :
-
-- Imprévisible mais stable statistiquement
-- Évite les patterns (genre "tous les 5 tours")
-- Peut déclencher 0, 1, 2, 3+ transformations → variation naturelle
-
-#### 🧠 Pourquoi l'Uniforme Discrète ?
-
-La **Uniform distribution** :
-
-> **Toutes les pièces ont la même chance**
-
-✔ Gameplay :
-
-- Pas de biais (sinon frustration)
-- Facile à comprendre pour le joueur
-- Toute pièce sur le plateau peut être transformée
+Ce projet a été développé pour les cours **Programmation Algorithmique**, **Synthèse d'images** et **Mathématiques** à l'IMAC (Image Multimédia, Audiovisuel et Communication), promotion 2027.
 
 ---
 
-### 🐎 **Cavalier Sauvage** — Une pièce au hasard devient un cavalier
+## Fonctionnalités
 
-#### 🎮 Description du Jeu
+### Fonctionnalités communes aux deux modes
 
-De temps en temps, **un pion aléatoire parmi tous les pions du plateau, sauf les King, est choisi et devient un Knight**. Cette transformation est instantanée et irréversible.
+**Implémentation complète du jeu d'échecs**
 
-**Loi** : Exponentielle
+- Toutes les pièces : Pion, Cavalier, Fou, Tour, Reine, Roi
+- Mouvements légaux validés pour chaque type de pièce
+- Promotion des pions
 
-#### 🧠 Pourquoi Exponentielle ?
+**Interface utilisateur avancée**
 
-La **Exponential distribution** modélise :
+- Sélection de pièces par clics souris
+- Visualisation des coups possibles
+- Menu de démarrage avec sélection de mode
 
-> **Le temps entre deux événements indépendants**
+**Rendu graphique immersif**
 
-**Propriété clé** : 👉 **Absence de mémoire (memoryless)**
+- Vue 3D du plateau d'échecs
+- Contrôle de caméra interactive
+- Skybox dynamique
+- Modèles 3D des pièces en GLTF
+- Éclairage Blinn-Phong
 
-Ça veut dire :
+### Spécificités du Mode Classique
 
-- Peu importe depuis combien de temps rien ne s'est passé
-- La probabilité reste la même
+Jeu d'échecs traditionnel sans interruption
 
-**✔ Gameplay** :
+- Les règles classiques s'appliquent
+- Jeu équilibré
 
-- Très naturel pour un événement "sauvage"
-- Pas prévisible → tension constante
-- Peut se déclencher "à tout moment"
+### Spécificités du Mode Chaotique
 
----
+**45% de chance de déclencher un événement chaotique par tour**
 
-### 🧠 **Dyscalculie** — Les pions bougent du mauvais nombre de cases
+Chaque événement :
 
-#### 🎮 Description du Jeu
-
-De temps en temps, lorsqu'un joueur joue un pion, **le pion avance d'une case de plus ou de moins que le mouvement prévu**. Cette erreur de calcul peut sauver ou perdre une partie en une fraction de seconde.
-
-**Loi** : Cauchy
-
-#### 🧠 Pourquoi Cauchy ?
-
-La **Cauchy distribution** est spéciale :
-
-> **Elle a des queues très lourdes**
-
-Cela signifie :
-
-- Petites erreurs fréquentes
-- **MAIS** grosses erreurs possibles (très possibles!)
-
-Contrairement à la normale :
-
-- Les extrêmes sont beaucoup plus probables
-
-**✔ Gameplay** :
-
-- Parfait pour un effet "erreur humaine"
-- Génère des situations absurdes → fun chaotique
-- Celles-ci étaient imprévisibles plutôt que juste "bruitées"
+- Est **sélectionné aléatoirement** parmi les 8 possibles
+- Utilise une **distribution mathématique spécifique** pour générer ses paramètres
+- Transforme le gameplay de manière **contrôlée mais imprévisible**
+- Bénéficie d'un **équilibrage basé sur les propriétés mathématiques**
 
 ---
 
-### 🧬 **Mutation** — Une pièce change de type aléatoirement
+## Mode de jeu classique
 
-#### 🎮 Description du Jeu
+### Le mode classique implémente l'intégralité des règles d'échecs
 
-De temps en temps, **au début du tour un pion aléatoire parmi ceux du joueur (sauf King) change de type**. Cette transformation affecte les possibilités de jeu pour ce tour et les tours suivants.
+## Mode chaotique
 
-**Loi** : Chi-Carré
+### 8 Événements Chaotiques
 
-#### 🧠 Pourquoi Chi² ?
+Les événements chaotiques utilisent les **distributions mathématiques** pour générer des situations de jeu imprévisibles.
 
-La **Chi-squared distribution** :
+### 1. **Révolution** — Des pions changent de camp
 
-- Toujours positive
-- Asymétrique (biaisée)
-  > **Elle favorise certaines valeurs**
+**Déclencheur** : 45% de chance par tour  
+**Effet** : 2-3 pions aléatoires changent de camp et deviennent ennemis
 
-Dans le jeu :
-
-- Certaines transformations peuvent être plus fréquentes que d'autres
-
-**✔ Gameplay** :
-
-- Permet de contrôler indirectement les probabilités
-- Évite un chaos totalement uniforme (plus intéressant)
-- Résultat peu prévisible mais cohérent
+| Aspect            | Détail                                         |
+| ----------------- | ---------------------------------------------- |
+| **Distributions** | Binomiale + Hypergéométrique                   |
+| **Sélection**     | Tirage sans remise parmi les pions disponibles |
 
 ---
 
-### 🧠 **Rupture d'Attention** — Le joueur fait un autre coup au hasard
+### 2. **Swap Reine ↔ Pion** — Transformations pion/reine
 
-#### 🎮 Description du Jeu
+**Déclencheur** : 45% de chance par tour  
+**Effet** : 0 à N pièces parmi les pions et reines échangent leur type
 
-De temps en temps, lorsqu'un joueur joue, **son pion fait un autre des mouvements possibles que celui choisi par le joueur**. Le joueur voit son intention complètement déjouée, mais le mouvement reste légal.
-
-**Loi** : Uniforme Discrète
-
-#### 🧠 Pourquoi Uniforme discrète ?
-
-La **Uniform distribution** :
-
-> **Une fois l'erreur déclenchée → aucun biais**
-
-✔ Logique :
-
-- Tous les coups légaux sont également plausibles
-- Pas de favoritisme caché
-
-✔ Gameplay :
-
-- Clair pour le joueur
-- Pas de frustration liée à un biais caché
-- L'aléatoire est le vrai problème, pas l'injustice
+| Aspect            | Détail                                        |
+| ----------------- | --------------------------------------------- |
+| **Distributions** | Poisson + Uniforme Discrète                   |
+| **Nombre**        | Variable (peut être 0, 1, 2+ transformations) |
 
 ---
 
-### 🏃 **Fuite** — Les pions ne peuvent aller que sur des cases isolées ET le tour s'arrête
+### 3. **Cavalier Sauvage** — Une pièce devient cavalier
 
-#### 🎮 Description du Jeu
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Une pièce aléatoire (sauf le roi) devient cavalier
 
-De temps en temps, **un pion va vers une case isolée (sans voisin autour)**. Le joueur ne peut pas continuer à jouer car un mouvement a déjà été réaliser : **fin de son tour**. Une pénalité brutale et irrévocable.
-
-**Loi** : Exponentielle
-
-#### 🧠 Pourquoi Exponentielle (encore) ?
-
-Même logique que **Cavalier Sauvage** :
-
-> **Événement rare + imprévisible dans le temps**
-
-Mais ici :
-
-- **Impact très fort** (fin de tour automatique)
-
-✔ Gameplay :
-
-- Effet "surprise brutale"
-- Pas anticipable → chaos pur
-- Pénalité importante qui le rend redouté
+| Aspect           | Détail                                        |
+| ---------------- | --------------------------------------------- |
+| **Distribution** | Exponentielle (sans mémoire)                  |
+| **Sélection**    | Uniforme parmi toutes les pièces non-roi      |
+| **Propriété**    | Peut se déclencher à tout moment sans pattern |
 
 ---
 
-### 🎨 **Daltonisme** — Le plateau devient gris, tu peux jouer n'importe quelle pièce
+### 4. **Dyscalculie** — Erreur de mouvement
 
-#### 🎮 Description du Jeu
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Un mouvement s'exécute avec ±N cases d'erreur
 
-De temps en temps, **pendant 1 tour seulement, tous les pions du plateau deviennent gris**. Le joueur qui doit jouer peut jouer **tous les pions, même ceux censés être à l'autre joueur**. Une confusion totale mais temporaire.
-
-**Loi** : Normale (Gauss)
-
-#### 🧠 Pourquoi Normale ?
-
-La **Normal distribution** modélise :
-
-> **Des variations autour d'une moyenne**
-
-Ici :
-
-- Tu ne veux pas un chaos constant
-- Tu veux des "pics" occasionnels (durée variable)
-
-✔ Gameplay :
-
-- Permet d'introduire un niveau de chaos fluctuant
-- Facile à équilibrer avec μ (fréquence) et σ (variabilité)
-- Certains tours sont plus "brumeux" que d'autres
+| Aspect           | Détail                                         |
+| ---------------- | ---------------------------------------------- |
+| **Distribution** | Cauchy (queues lourdes)                        |
+| **Magnitude**    | Erreurs petites MAIS erreurs énormes possibles |
 
 ---
 
-## 📊 Résumé des Lois Utilisées
+### 5. **Mutation** — Transformation de pièce aléatoire
 
-| 🎲 Événement     | 📐 Loi           | Type     | Propriétés                                 |
-| ---------------- | ---------------- | -------- | ------------------------------------------ |
-| 🎲 Révolution    | Binomiale + Hyp. | Discrète | Variables contrôlées, sans remise          |
-| 🔁 SwapReinePion | Poisson + Unif.  | Discrète | Rareté naturelle + sélection équitable     |
-| 🐎 Cavalier      | Exponentielle    | Continue | Absence de mémoire, imprévisible           |
-| 🧠 Dyscalculie   | Cauchy           | Continue | Queues lourdes, erreurs extrêmes possibles |
-| 🧬 Mutation      | Chi-Carré        | Continue | Asymétrique, certains types favorisés      |
-| 🧠 Rupture       | Uniforme disc.   | Discrète | Équité totale dans la sélection            |
-| 🏃 Fuite         | Exponentielle    | Continue | Imprévisibilité + impact fort              |
-| 🎨 Daltonisme    | Normale          | Continue | Variation autour d'une moyenne             |
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Une pièce du joueur actif (sauf roi) change de type aléatoirement
+
+| Aspect           | Détail                                |
+| ---------------- | ------------------------------------- |
+| **Distribution** | Chi-Carré (asymétrique)               |
+| **Sélection**    | Parmi les pièces du joueur actif      |
+| **Variabilité**  | Certains types peuvent être favorisés |
 
 ---
 
-## 🎮 Stratégie de Gameplay
+### 6. **Rupture d'Attention** — Faux mouvement
 
-### 45% de déclencher un événement par tour (en mode Chaos)
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Votre pièce se déplace vers un coup légal DIFFÉRENT de celui choisi
 
-Une fois l'événement sélectionné aléatoirement, sa loi de probabilité détermine :
-
-- **Magnitude** : Combien de pions/cases sont affectés (Binomiale, Poisson, etc.)
-- **Sévérité** : L'ampleur de l'impact (Cauchy pour extrêmes, Normale pour modéré)
-- **Équité** : Comment on sélectionne (Uniforme pour pas de biais, Hypergéométrique pour cohérence)
-
-### Les pièges à éviter
-
-⚠️ **Revenir à l'Uniforme pour tout** : Les événements deviendraient prévisibles et ennuyeux  
-⚠️ **Utiliser les mêmes lois** : Perte de variété et d'intérêt  
-⚠️ **Ignorer les propres mathématiques des événements** : Le chaos perd du statut
+| Aspect           | Détail                                |
+| ---------------- | ------------------------------------- |
+| **Distribution** | Uniforme Discrète                     |
+| **Sélection**    | Parmi tous les coups légaux possibles |
 
 ---
 
-## 🏗️ Architecture du Code
+### 7. **Fuite** — Coup isolé + fin de tour
 
-**Fichier unifié** : `ChaoticEvent.hpp/cpp`
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Un mouvement s'exécute vers une case isolée ET votre tour s'arrête
 
-- Tous les 8 événements en un seul manager
-- Une méthode par événement avec sa distribution propre
-- Intégration dans `GameState` pour exécution à chaque tour
-
-**Historique des événements** :
-
-- Format simplifié : `[Tour X] NomEvenement`
-- Pas de couleur joueur (les événements sont globaux)
+| Aspect           | Détail                              |
+| ---------------- | ----------------------------------- |
+| **Distribution** | Exponentielle (rare + imprévisible) |
 
 ---
 
-## 📚 Lectures Complémentaires
+### 8. **Daltonisme** — Plateau gris 1 tour
 
-- Théorie des probabilités appliquée au gameplay
-- Balancing aléatoire dans les jeux de stratégie
-- Propriétés des lois continues vs discrètes
+**Déclencheur** : 45% de chance par tour  
+**Effet** : Pendant 1 tour, tous les pions deviennent gris → jouez les deux couleurs
+
+| Aspect           | Détail                                   |
+| ---------------- | ---------------------------------------- |
+| **Distribution** | Normale (Gauss)                          |
+| **Durée**        | Exactement 1 tour (temporaire)           |
+| **Liberté**      | Vous pouvez déplacer N'IMPORTE QUEL pion |
+
+---
+
+## Résumé des 8 Événements
+
+| Événement   | Distribution      | Impact                    |
+| ----------- | ----------------- | ------------------------- |
+| Révolution  | Binomiale + Hyp.  | Changement de camp        |
+| Swap        | Poisson + Unif.   | Transformation pion/reine |
+| Cavalier    | Exponentielle     | Nouvelle menace           |
+| Dyscalculie | Cauchy            | Mouvement erroné          |
+| Mutation    | Chi-Carré         | Type aléatoire            |
+| Rupture     | Uniforme Discrète | Faux coup                 |
+| Fuite       | Exponentielle     | Coup isolé + fin          |
+| Daltonisme  | Normale           | Plateau gris 1 tour       |
+
+---
+
+## Équilibrage Mathématique
+
+### Probabilités par tour (Mode Chaotique)
+
+- **45% de chance** qu'**un événement** se déclenche
+- **1 événement sélectionné** aléatoirement parmi les 8 (12.5% chacun)
+- **Paramètres variables** selon la distribution de l'événement
+
+### Propriétés des distributions utilisées
+
+**Distributions discrètes** (nombre entier)
+
+- Binomiale : nombre d'occurrences fixe mais variable
+- Poisson : rareté naturelle
+- Uniforme Discrète : aucun biais
+
+**Distributions continues** (fluides)
+
+- Exponentielle : sans mémoire (memoryless) → imprévisible
+- Cauchy : queues lourdes → extrêmes possibles
+- Chi-Carré : asymétrique → biais intégré
+- Normale : modulation douce autour d'une moyenne
+
+---
+
+## Architecture
+
+### Structure du projet
+
+```
+chess_imac_s4/
+├── src/                          # Code source principal
+│   ├── main.cpp                  # Point d'entrée de l'application
+│   ├── Game.cpp/hpp              # Boucle principale du jeu
+│   │
+│   ├── core/                     # Logique du jeu
+│   │   ├── Board.cpp/hpp         # Gestion du plateau d'échecs
+│   │   ├── GameState.cpp/hpp     # État du jeu (tours, pièces, historique)
+│   │   ├── Piece.cpp/hpp         # Classe de base pour les pièces
+│   │   ├── ChaoticEvent.cpp/hpp  # Manager des 8 événements chaotiques
+│   │   └── pieces/               # Implémentations des pièces
+│   │       ├── Pawn.cpp/hpp      # Pion
+│   │       ├── Knight.cpp/hpp    # Cavalier
+│   │       ├── Bishop.cpp/hpp    # Fou
+│   │       ├── Rook.cpp/hpp      # Tour
+│   │       ├── Queen.cpp/hpp     # Reine
+│   │       └── King.cpp/hpp      # Roi
+│   │
+│   ├── ui/                       # Interface utilisateur et rendu
+│   │   ├── Renderer.cpp/hpp      # Rendu ImGui du plateau 2D
+│   │   ├── Renderer3D.cpp/hpp    # Rendu OpenGL 3D
+│   │   ├── InputHandler.cpp/hpp  # Gestion des entrées souris/clavier
+│   │   ├── GLTFLoader.cpp/hpp    # Chargement des modèles GLTF
+│   │   ├── Mesh.cpp/hpp          # Gestion des mailles 3D
+│   │   ├── PieceModel.cpp/hpp    # Modèles 3D des pièces
+│   │   ├── Skybox.cpp/hpp        # Skybox 3D
+│   │   ├── PieceAnimation.hpp    # Animations des pièces
+│   │   ├── SelectionState.hpp    # État de sélection
+│   │   └── GLHeaders.hpp         # Headers OpenGL/GLAD
+│   │
+│   ├── math/                     # Distributions de probabilité
+│   │   ├── Bernoulli.cpp/hpp     # Distribution de Bernoulli
+│   │   ├── Binomial.cpp/hpp      # Distribution binomiale
+│   │   ├── Poisson.cpp/hpp       # Distribution de Poisson
+│   │   ├── Uniform*.cpp/hpp      # Distributions uniformes (discrète/continue)
+│   │   ├── Normal.cpp/hpp        # Distribution normale (Gauss)
+│   │   ├── Exponential.cpp/hpp   # Distribution exponentielle
+│   │   ├── Cauchy.cpp/hpp        # Distribution de Cauchy
+│   │   ├── ChiSquared.cpp/hpp    # Distribution chi-carré
+│   │   └── Hypergeometric.cpp/hpp# Distribution hypergéométrique
+│   │
+│   └── glimac/                   # Bibliothèque graphique personnalisée
+│       └── src/glimac/           # Utilitaires OpenGL
+│
+├── lib/                          # Dépendances externes
+│   ├── quick_imgui/              # ImGui avec glfw/opengl
+│   ├── glm/                      # Mathématiques vectorielles (GLM)
+│   └── tinygltf/                 # Loader GLTF
+│
+├── assets/                       # Ressources de jeu
+│   ├── fonts/                    # Polices ImGui
+│   ├── models/                   # Modèles GLTF 3D
+│   └── shaders/                  # Shaders OpenGL
+│       ├── blinnphong.vs/fs.glsl # Vertex/Fragment shaders (Blinn-Phong)
+│       ├── board.vs/fs.glsl      # Shaders du plateau
+│       └── skybox.vs/fs.glsl     # Shaders de la skybox
+│
+├── bin/                          # Exécutables compilés
+│   └── Release/                  # Build de release
+│
+├── build/                        # Fichiers de compilation (CMake)
+│
+└── CMakeLists.txt                # Configuration CMake
+
+```
+
+### Modules principaux
+
+#### **core/GameState**
+
+- Gère l'état complet du jeu (pièces, plateau, tours)
+- Valide les mouvements légaux
+- Détecte check/checkmate/stalemate
+- Enregistre l'historique des événements
+
+#### **core/Board**
+
+- Représente le plateau 8×8
+- Gère les pièces et leurs positions
+- Fournit des fonctions de requête (case occupée, pièce à position, etc.)
+
+#### **core/Piece & pieces/**
+
+- Classe abstraite `Piece` avec interface commune
+- Implémentations concrètes pour chaque type de pièce
+- Méthodes `getMoves()` pour calculer les coups possibles
+
+#### **core/ChaoticEvent**
+
+- Manager centralisé des 8 événements chaotiques
+- Utilise les distributions mathématiques correspondantes
+- Applique les transformations au plateau
+
+#### **math/Distributions**
+
+- Implémentations de 10 distributions de probabilité
+- Interface commune pour générer des valeurs aléatoires
+- Utilisées par `ChaoticEvent` pour les paramètres
+
+#### **ui/Renderer**
+
+- Rendu du plateau avec ImGui
+- Affichage des pièces, sélections, coups possibles
+- Interface utilisateur (historique, menus)
+
+#### **ui/Renderer3D**
+
+- Rendu OpenGL 3D du plateau
+- Gestion de la caméra interactive
+- Skybox et éclairage Blinn-Phong
+
+#### **ui/InputHandler**
+
+- Détecte les clics souris sur les cases
+- Convertit positions écran → positions plateau
+- Gère les contrôles caméra (clavier/souris)
+
+---
+
+## Installation et compilation
+
+### Prérequis
+
+- **Compilateur C++20** : GCC 10+, Clang 12+, ou MSVC 2019+
+- **CMake** 3.20+
+- **OpenGL** 3.3+ (driver graphique compatible)
+- **Linux/macOS/Windows** avec support X11/Wayland (Linux), Cocoa (macOS), ou Win32 (Windows)
+
+### Dépendances système
+
+#### Sur Ubuntu/Debian
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential cmake \
+    libglfw3-dev libglad-dev \
+    libfreetype6-dev
+```
+
+#### Sur macOS
+
+```bash
+brew install cmake glfw3 freetype
+```
+
+#### Sur Windows
+
+- Installer Visual Studio 2019+ ou MinGW
+- CMake sera utilisé pour la génération de projet
+
+### Compilation
+
+1. **Cloner le repository**
+
+```bash
+git clone <repository-url>
+cd chess_imac_s4
+```
+
+2. **Créer le dossier de build**
+
+```bash
+mkdir build
+cd build
+```
+
+3. **Générer avec CMake**
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Release
+```
+
+4. **Compiler**
+
+```bash
+cmake --build . --config Release
+```
+
+ou avec make directement :
+
+```bash
+make
+```
+
+5. **Exécuter**
+
+```bash
+cd ../bin/Release
+./ImGuiTemplate
+```
+
+### Options de compilation
+
+```bash
+# Debug avec symboles
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+
+# Release optimisé
+cmake .. -DCMAKE_BUILD_TYPE=Release
+
+# Avec support des avertissements stricts (comenté par défaut)
+# cmake .. -DENABLE_WARNINGS_AS_ERRORS=ON
+```
+
+---
+
+## Dépendances
+
+### Bibliothèques intégrées
+
+| Bibliothèque    | Version | Utilisation                             |
+| --------------- | ------- | --------------------------------------- |
+| **quick_imgui** | Latest  | Interface graphique ImGui               |
+| **GLM**         | Latest  | Mathématiques vectorielles/matricielles |
+| **TinyGLTF**    | Latest  | Chargement de modèles GLTF              |
+| **GLAD**        | 0.1.34  | Chargement des fonctions OpenGL         |
+| **GLFW**        | 3.3+    | Fenêtre et contexte OpenGL              |
+| **ImGui**       | 1.89+   | Interface utilisateur                   |
+
+### Dépendances système
+
+- **OpenGL** 3.3+
+- **C++ Standard Library** (C++20)
+
+---
+
+## Licence
+
+Ce projet est développé dans le cadre du cours **Programmation Algorithmique** à l'IMAC.
+
+Les dépendances utilisent leurs propres licences :
+
+- **ImGui** : MIT
+- **GLM** : Happy Bunny / Modified MIT
+- **TinyGLTF** : MIT
+- **GLAD** : MIT
+
+---
