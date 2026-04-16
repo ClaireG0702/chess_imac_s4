@@ -5,8 +5,7 @@
 #include <utility>
 #include <vector>
 #include "Board.hpp"
-#include "GameEvent.hpp"
-#include "PieceEvent.hpp"
+#include "ChaoticEvent.hpp"
 
 // Constants for clean code
 constexpr int INVALID_POSITION    = -1;
@@ -49,7 +48,6 @@ struct ClickResult {
 struct EventRecord {
     std::string eventName;
     int         turnNumber;
-    Color       player;
 };
 
 class GameState {
@@ -96,8 +94,7 @@ private:
     Color                                    m_currentPlayer;
     GameStatus                               m_status;
     GameMode                                 m_gameMode;
-    std::unique_ptr<RandomGameEventManager>  m_gameEventManager;
-    std::unique_ptr<RandomPieceEventManager> m_pieceEventManager;
+    std::unique_ptr<RandomChaosEventManager> m_chaosEventManager;
     int                                      m_selectedRow;
     int                                      m_selectedCol;
     bool                                     m_promotionPending;
@@ -109,6 +106,7 @@ private:
     int                                      m_daltonismTurnsRemaining;                // Number of turns daltonism remains active
     Color                                    m_originalColors[BOARD_SIZE][BOARD_SIZE]; // Store original colors for restoration
     bool                                     m_colorsSaved;
+    bool                                     m_rupturAttentionActive;                  // RuptureAttention event: next move will be random
 
     void switchPlayer();
     void updateGameStatus();

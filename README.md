@@ -1,279 +1,312 @@
-# Jeu d'échec
+# 🎲 Jeu d'Échecs Chaotique
 
-## Evenements aléatoires
-
-Voici une liste des évènements aléatoire qu'il est possible de retrouver :
-
-- **Révolution** : les pions se révoltent et passe du côté opposé
-- **Swap Reine Pion** : les pions deviennent des dames et les dames de pions
-- **Cavalier Sauvage** : une pièce au hasard devient un cavalier
-<!-- - **Médusa** : une pièce se change en tour qui ne peut plus bouger -->
-- **Rupture d'attention** : pendant 2 tours, les pièces ne respectent pas ce qui est dit et font un autre mouvement
-- **Fuite** : les pions ne veulent plus aller se coller aux autres pions, les seuls mouvements possible durant ce tour c'est aller sur une case isolée
-- **Dyscalculie** : les pions arrivent plus a bouger du bon nombre de case, tu leurs dis de bouger de 2 et ils bougent de 1 ou 3 au pif
-- **Mutation** : une pièce change a un tour random de type
-  <!-- - **Allier** : une pièce random devient neutre, elle joue pour la personne qui la bouge pendant les 3 prochains tours -->
-  <!-- - **Fusion** : fusionne 2 pions et en fait un super pion qui peut se déplacer de 2 cases à chaque fois -->
-- **Daltonien** : le plateau devient entièrement gris et tu peux jouer n'importe quelle pièce (au risque de se tromper)
-  <!-- - **Reproduction** : si y'a 2 pions sur une meme ligne a 1 case d'écart alors rajoute un pion au mileu -->
-  <!-- - **Shuffle** : on agite le plateau et on met les pièces au hasard dessus -->
-
-## Tableau d'association des événements
-
-| Evènement         | Loi proposée             | Pourquoi                                                                                                           |
-| ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Révolution        | **Loi binomiale**        | Chaque pion a une probabilité (p) de se rebeller. Le nombre de pions qui changent de camp suit donc une binomiale. |
-| Swap Reine Pion   | **Loi de Poisson**       | Les Swap Reine Pions sont souvent modélisées par Poisson : nombre de transformations par tour.                            |
-| Cavalier Sauvage  | **Loi uniforme**         | On choisit une pièce au hasard parmi toutes les pièces.                                                            |
-| Rupture d'attention| **Loi de Cauchy**        | Loi très imprévisible avec valeurs extrêmes → correspond bien à un comportement chaotique.                         |
-| Fuite           | **Loi hypergéométrique** | On sélectionne parmi les cases isolées sans remise dans un ensemble fini (le plateau).                             |
-| Dyscalculie       | **Loi normale (Gauss)**  | L’erreur autour du mouvement prévu peut suivre une distribution centrée (1,2,3 cases autour de la valeur).         |
-| Mutation       | **Loi exponentielle**    | Temps d'attente avant le changement de type de pièce.                                                              |
-| Daltonien         | **Loi du Chi-deux**      | Utilisable pour mesurer la confusion entre catégories (types de pièces).                                           |
-
-## Architecture des événements
-
-Les événements sont séparés en deux catégories :
-
-### Événements affectant le JEU (modifient l'état global du plateau)
-
-- **Révolution** : les pions se révoltent et changent de côté
-- **Swap Reine Pion** : les pions deviennent des dames et les dames deviennent des pions
-- **Cavalier Sauvage** : une pièce au hasard devient un cavalier
-- **Daltonien** : les pions deviennent gris, on peut jouer n'importe quelle pièce que ce soit de son camp ou du camp adversaire (tout en respectant les mouvements possibles)
-
-### Événements affectant les PIONS (modifient le comportement des mouvements)
-
-- **Rupture d'attention** : les pièces font un autre mouvement que celui choisi
-- **Fuite** : les pions ne peuvent se déplacer que vers des cases isolées
-- **Dyscalculie** : les pions bougent du mauvais nombre de cases
-- **Mutation** : une pièce change aléatoirement de type
+Un jeu d'échecs augmenté avec des événements chaotiques générés par des lois de probabilité distinctes. Chaque événement transforme le gameplay de manière imprévisible mais contrôlée.
 
 ---
 
-## Documentation Académique des Lois de Variables Aléatoires
+## 🎲 Les 8 Événements Chaotiques
 
-Cette section documente rigoureusement l'ensemble des lois utilisées, leurs paramètres, l'espérance et la variance.
+### 🎲 **Révolution** — Des pions changent de camp
 
-### Vérification des Critères du Projet
+#### 🎮 Description du Jeu
 
-✅ **Critère i** : Toutes les lois sont différentes (8 lois distinctes)  
-✅ **Critère ii** : Toutes les lois sont connues et bien établies en théorie des probabilités  
-✅ **Critère iii** : 4 lois à densité (Cauchy, Normale, Exponentielle, Chi-Deux)  
-✅ **Critère iv** : Tous les paramètres sont documentés et interprétés  
-✅ **Critère v** : Espérance et variance documentées pour toutes les VA numériques
+De temps en temps, **2-3 pions (Pawn) changent de camp**. Ces pions, sélectionnés aléatoirement sans remise, deviennent des pions ennemis avec toutes les implications tactiques.
 
----
+**Lois** : Binomiale + Hypergéométrique
 
-### 1. **Révolution** → Loi Binomiale $\mathcal{B}(n, p)$
+#### 🧠 Pourquoi la Binomiale ?
 
-**Type** : Loi discrète
+La **Binomial distribution** modélise :
 
-**Paramètres** :
+> **"Combien d'individus dans un groupe subissent un changement"**
 
-- $n$ = nombre de pions du joueur courant (n ≤ 16)
-- $p$ = probabilité de rébellion par pion (recommandé: $p = 0.25$)
+C'est exactement le cas ici :
 
-**Formule** : $X \sim \mathcal{B}(n, p)$
+- Chaque pion a une probabilité `p` de "se rebeller"
+- Tu veux un nombre variable mais contrôlé
 
-**Espérance** : $E[X] = np$
+**✔ Avantage gameplay** :
 
-**Variance** : $\text{Var}(X) = np(1-p)$
+- Évite un résultat fixe (toujours 2 ou 3 pions)
+- Produit naturellement des petits nombres (si p faible)
+- Crée de la tension : "combien vont vraiment se rebeller ?"
 
-**Justification** : Chaque pion a indépendamment une probabilité $p$ de se rebeller et changer de camp. Le nombre total de pions révoltés suit une binomiale.
+#### 🧠 Pourquoi l'Hypergéométrique ?
 
-**Exemple d'exécution** : Avec $n = 8$ pions et $p = 0.25$ :
+La **Hypergeometric distribution** modélise :
 
-- $E[X] = 8 \times 0.25 = 2$ pions changent de camp en moyenne
-- $\text{Var}(X) = 8 \times 0.25 \times 0.75 = 1.5$
+> **Tirage sans remise dans une population finie**
 
----
+Dans le jeu :
 
-### 2. **Swap Reine Pion** → Loi de Poisson $\mathcal{P}(\lambda)$
+- Tu ne peux pas sélectionner deux fois le même pion
+- Le plateau est un ensemble fini (16 pions max par camp)
 
-**Type** : Loi discrète
+**✔ Avantage gameplay** :
 
-**Paramètre** :
-
-- $\lambda$ = taux moyen de transformations (recommandé: $\lambda = 2$)
-
-**Formule** : $X \sim \mathcal{P}(\lambda)$, avec $P(X = k) = \frac{e^{-\lambda} \lambda^k}{k!}$
-
-**Espérance** : $E[X] = \lambda$
-
-**Variance** : $\text{Var}(X) = \lambda$
-
-**Justification** : Les Swap Reine Pions suivent classiquement une loi de Poisson. Le nombre de transformations Pions ↔ Dames par événement est modélisé ainsi.
-
-**Exemple d'exécution** : Avec $\lambda = 2$ :
-
-- $E[X] = 2$ transformations en moyenne
-- $\text{Var}(X) = 2$
-- Les transformations sont indépendantes et rares (propriété de Poisson)
+- Résultat cohérent (pas de doublons)
+- Plus réaliste qu'un tirage indépendant
+- Élimine les pions un par un jusqu'à atteindre le nombre requis
 
 ---
 
-### 3. **Cavalier Sauvage** → Loi Uniforme Discrète $\mathcal{U}(a, b)$
+### 🔁 **Swap Reine ↔ Pion** — Des pions deviennent des dames et inversement
 
-**Type** : Loi discrète
+#### 🎮 Description du Jeu
 
-**Paramètres** :
+De temps en temps, **un pion aléatoire est choisi parmi tous les Pawn et Queen**. Celui-ci change immédiatement pour devenir de l'autre type : un Pawn devient Queen, ou une Queen devient Pawn.
 
-- $a = 1$ (première pièce)
-- $b$ = nombre total de pièces non-rois (varie: 16-32 selon la phase du jeu)
+**Lois** : Poisson + Uniforme Discrète
 
-**Formule** : $X \sim \mathcal{U}(a, b)$ avec $X \in \{1, 2, \ldots, b\}$
+#### 🧠 Pourquoi la Poisson ?
 
-**Espérance** : $E[X] = \frac{a + b}{2}$
+La **Poisson distribution** modélise :
 
-**Variance** : $\text{Var}(X) = \frac{(b - a + 1)^2 - 1}{12}$
+> **Le nombre d'événements rares dans un intervalle**
 
-**Justification** : La pièce est choisie uniformément aléatoirement parmi toutes les pièces présentes (sauf les rois, qui ne peuvent pas devenir cavaliers).
+Ici :
 
-**Exemple d'exécution** : Avec $b = 30$ pièces non-rois :
+- L'événement est rare
+- Tu veux qu'il arrive "de temps en temps", sans régularité
 
-- $E[X] = \frac{1 + 30}{2} = 15.5$
-- $\text{Var}(X) = \frac{31^2 - 1}{12} = 80$
+**✔ Avantage gameplay** :
 
----
+- Imprévisible mais stable statistiquement
+- Évite les patterns (genre "tous les 5 tours")
+- Peut déclencher 0, 1, 2, 3+ transformations → variation naturelle
 
-### 4. **Rupture d'attention** → Loi de Cauchy $\mathcal{C}(x_0, \gamma)$ ⭐ Densité
+#### 🧠 Pourquoi l'Uniforme Discrète ?
 
-**Type** : Loi continue **à densité**
+La **Uniform distribution** :
 
-**Paramètres** :
+> **Toutes les pièces ont la même chance**
 
-- $x_0$ = localisation (centrage du mouvement, recommandé: $x_0 = 0$)
-- $\gamma$ = échelle (variabilité, recommandé: $\gamma = 2$)
+✔ Gameplay :
 
-**Densité de probabilité** :
-$$f(x) = \frac{1}{\pi \gamma \left[1 + \left(\frac{x - x_0}{\gamma}\right)^2\right]}$$
-
-**Espérance** : **Non définie** ⚠️ (intégrale divergente)
-
-**Variance** : **Infinie** ⚠️
-
-**Justification** : La loi de Cauchy est extrêmement imprévisible avec des valeurs aberrantes infinies. Elle modélise parfaitement le Rupture d'attention où le mouvement effectué est radicalement différent de celui attendu, sans moyenne bien définie ni variance finie.
-
-**Remarque académique** : C'est une loi pathologique rare où $E[X]$ et $\text{Var}(X)$ n'existent pas, illustrant l'imprévisibilité radicale.
+- Pas de biais (sinon frustration)
+- Facile à comprendre pour le joueur
+- Toute pièce sur le plateau peut être transformée
 
 ---
 
-### 5. **Fuite** → Loi Hypergéométrique $\mathcal{H}(N, K, n)$
+### 🐎 **Cavalier Sauvage** — Une pièce au hasard devient un cavalier
 
-**Type** : Loi discrète
+#### 🎮 Description du Jeu
 
-**Paramètres** :
+De temps en temps, **un pion aléatoire parmi tous les pions du plateau, sauf les King, est choisi et devient un Knight**. Cette transformation est instantanée et irréversible.
 
-- $N$ = nombre total de cases du plateau = 64
-- $K$ = nombre de cases isolées (sans pièces adjacentes) ≈ 20-30
-- $n$ = nombre de destinations possibles pour la pièce ≈ 4-8
+**Loi** : Exponentielle
 
-**Formule** : $X \sim \mathcal{H}(N, K, n)$, avec $P(X = k) = \frac{\binom{K}{k}\binom{N-K}{n-k}}{\binom{N}{n}}$
+#### 🧠 Pourquoi Exponentielle ?
 
-**Espérance** : $E[X] = n \cdot \frac{K}{N}$
+La **Exponential distribution** modélise :
 
-**Variance** : $\text{Var}(X) = n \cdot \frac{K}{N} \cdot \frac{N-K}{N} \cdot \frac{N-n}{N-1}$
+> **Le temps entre deux événements indépendants**
 
-**Justification** : On sélectionne $n$ cases (déplacements possibles) parmi $N$ sans remise, et on compte combien sont "isolées" (succès = K). Tirage sans remise → hypergéométrique.
+**Propriété clé** : 👉 **Absence de mémoire (memoryless)**
 
-**Exemple d'exécution** : Avec $N = 64$, $K = 25$, $n = 6$ :
+Ça veut dire :
 
-- $E[X] = 6 \times \frac{25}{64} \approx 2.34$ destinations isolées
-- $\text{Var}(X) = 6 \times \frac{25}{64} \times \frac{39}{64} \times \frac{58}{63} \approx 1.32$
+- Peu importe depuis combien de temps rien ne s'est passé
+- La probabilité reste la même
 
----
+**✔ Gameplay** :
 
-### 6. **Dyscalculie** → Loi Normale (Gauss) $\mathcal{N}(\mu, \sigma^2)$ ⭐ Densité
-
-**Type** : Loi continue **à densité**
-
-**Paramètres** :
-
-- $\mu$ = distance attendue de déplacement (ex: $\mu = 3$ cases)
-- $\sigma$ = écart-type représentant l'erreur (recommandé: $\sigma = 0.8$)
-
-**Densité de probabilité** :
-$$f(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{(x - \mu)^2}{2\sigma^2}\right)$$
-
-**Espérance** : $E[X] = \mu$
-
-**Variance** : $\text{Var}(X) = \sigma^2$
-
-**Justification** : L'erreur de calcul de distance suit une distribution normale centrée autour de la distance attendue. Par le théorème central limite, les petites erreurs sont plus fréquentes.
-
-**Exemple d'exécution** : Avec $\mu = 3$ cases, $\sigma = 0.8$ :
-
-- $E[X] = 3$ cases (pions bougent en moyenne de 3 cases)
-- $\text{Var}(X) = 0.64$
-- Les déplacements oscillent typiquement entre 1 et 5 cases (intervalle $[\mu - 2\sigma, \mu + 2\sigma]$)
+- Très naturel pour un événement "sauvage"
+- Pas prévisible → tension constante
+- Peut se déclencher "à tout moment"
 
 ---
 
-### 7. **Mutation** → Loi Exponentielle $\mathcal{E}(\lambda)$ ⭐ Densité
+### 🧠 **Dyscalculie** — Les pions bougent du mauvais nombre de cases
 
-**Type** : Loi continue **à densité**
+#### 🎮 Description du Jeu
 
-**Paramètre** :
+De temps en temps, lorsqu'un joueur joue un pion, **le pion avance d'une case de plus ou de moins que le mouvement prévu**. Cette erreur de calcul peut sauver ou perdre une partie en une fraction de seconde.
 
-- $\lambda$ = taux de changement (recommandé: $\lambda = 0.5$ tours⁻¹)
+**Loi** : Cauchy
 
-**Densité de probabilité** :
-$$f(x) = \lambda e^{-\lambda x} \quad \text{pour } x \geq 0$$
+#### 🧠 Pourquoi Cauchy ?
 
-**Espérance** : $E[X] = \frac{1}{\lambda}$
+La **Cauchy distribution** est spéciale :
 
-**Variance** : $\text{Var}(X) = \frac{1}{\lambda^2}$
+> **Elle a des queues très lourdes**
 
-**Justification** : La loi exponentielle modélise le temps d'attente avant un événement dans un processus de Poisson. Ici, c'est le nombre de tours avant que la pièce change aléatoirement de type.
+Cela signifie :
 
-**Exemple d'exécution** : Avec $\lambda = 0.5$ :
+- Petites erreurs fréquentes
+- **MAIS** grosses erreurs possibles (très possibles!)
 
-- $E[X] = \frac{1}{0.5} = 2$ tours en moyenne avant changement
-- $\text{Var}(X) = \frac{1}{0.25} = 4$
-- Propriété d'absence de mémoire : le changement ne dépend pas du passé
+Contrairement à la normale :
 
----
+- Les extrêmes sont beaucoup plus probables
 
-### 8. **Daltonien** → Loi du Chi-Deux $\chi^2(k)$ ⭐ Densité
+**✔ Gameplay** :
 
-**Type** : Loi continue **à densité**
-
-**Paramètre** :
-
-- $k$ = degrés de liberté = nombre de types de pièces distinguables = 5  
-  (Pion, Cavalier, Fou, Tour, Dame)
-
-**Définition** : $X \sim \chi^2(k)$ où $X = \sum_{i=1}^{k} Z_i^2$ avec $Z_i \sim \mathcal{N}(0,1)$ indépendants
-
-**Densité de probabilité** :
-$$f(x) = \frac{1}{2^{k/2} \Gamma(k/2)} x^{(k/2)-1} e^{-x/2}$$
-
-**Espérance** : $E[X] = k$
-
-**Variance** : $\text{Var}(X) = 2k$
-
-**Justification** : La confusion daltonienne correspond à une combinaison de "carrés d'erreurs" dans la discrimination des couleurs. Avec $k=5$ types de pièces, la confusion suit une Chi-Deux(5).
-
-**Exemple d'exécution** : Avec $k = 5$ :
-
-- $E[X] = 5$ (niveau moyen de confusion)
-- $\text{Var}(X) = 10$
-- Loi asymétrique reflétant que la confusion peut être très faible ou très élevée
+- Parfait pour un effet "erreur humaine"
+- Génère des situations absurdes → fun chaotique
+- Celles-ci étaient imprévisibles plutôt que juste "bruitées"
 
 ---
 
-## Résumé Comparatif Complet
+### 🧬 **Mutation** — Une pièce change de type aléatoirement
 
-| Événement   | Loi              | Type     | Densité?   | $E[X]$ définie? | $\text{Var}(X)$ définie? |
-| ----------- | ---------------- | -------- | ---------- | --------------- | ------------------------ |
-| Révolution  | Binomiale        | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| SwapReinePion| Poisson          | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| Cavalier    | Uniforme disc.   | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| Rupture d'attention | Cauchy           | Continue | ✅ **Oui** | ❌ Non          | ❌ Non                   |
-| Fuite     | Hypergéométrique | Discrète | ❌ Non     | ✅ Oui          | ✅ Oui                   |
-| Dyscalculie | Normale          | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
-| Mutation | Exponentielle    | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
-| Daltonien   | Chi-Deux         | Continue | ✅ **Oui** | ✅ Oui          | ✅ Oui                   |
+#### 🎮 Description du Jeu
 
-**Lois à densité (Critère iii)** : 4/8 ✅ (Cauchy, Normale, Exponentielle, Chi-Deux)
+De temps en temps, **au début du tour un pion aléatoire parmi ceux du joueur (sauf King) change de type**. Cette transformation affecte les possibilités de jeu pour ce tour et les tours suivants.
+
+**Loi** : Chi-Carré
+
+#### 🧠 Pourquoi Chi² ?
+
+La **Chi-squared distribution** :
+
+- Toujours positive
+- Asymétrique (biaisée)
+  > **Elle favorise certaines valeurs**
+
+Dans le jeu :
+
+- Certaines transformations peuvent être plus fréquentes que d'autres
+
+**✔ Gameplay** :
+
+- Permet de contrôler indirectement les probabilités
+- Évite un chaos totalement uniforme (plus intéressant)
+- Résultat peu prévisible mais cohérent
+
+---
+
+### 🧠 **Rupture d'Attention** — Le joueur fait un autre coup au hasard
+
+#### 🎮 Description du Jeu
+
+De temps en temps, lorsqu'un joueur joue, **son pion fait un autre des mouvements possibles que celui choisi par le joueur**. Le joueur voit son intention complètement déjouée, mais le mouvement reste légal.
+
+**Loi** : Uniforme Discrète
+
+#### 🧠 Pourquoi Uniforme discrète ?
+
+La **Uniform distribution** :
+
+> **Une fois l'erreur déclenchée → aucun biais**
+
+✔ Logique :
+
+- Tous les coups légaux sont également plausibles
+- Pas de favoritisme caché
+
+✔ Gameplay :
+
+- Clair pour le joueur
+- Pas de frustration liée à un biais caché
+- L'aléatoire est le vrai problème, pas l'injustice
+
+---
+
+### 🏃 **Fuite** — Les pions ne peuvent aller que sur des cases isolées ET le tour s'arrête
+
+#### 🎮 Description du Jeu
+
+De temps en temps, **un pion va vers une case isolée (sans voisin autour)**. Le joueur ne peut pas continuer à jouer car un mouvement a déjà été réaliser : **fin de son tour**. Une pénalité brutale et irrévocable.
+
+**Loi** : Exponentielle
+
+#### 🧠 Pourquoi Exponentielle (encore) ?
+
+Même logique que **Cavalier Sauvage** :
+
+> **Événement rare + imprévisible dans le temps**
+
+Mais ici :
+
+- **Impact très fort** (fin de tour automatique)
+
+✔ Gameplay :
+
+- Effet "surprise brutale"
+- Pas anticipable → chaos pur
+- Pénalité importante qui le rend redouté
+
+---
+
+### 🎨 **Daltonisme** — Le plateau devient gris, tu peux jouer n'importe quelle pièce
+
+#### 🎮 Description du Jeu
+
+De temps en temps, **pendant 1 tour seulement, tous les pions du plateau deviennent gris**. Le joueur qui doit jouer peut jouer **tous les pions, même ceux censés être à l'autre joueur**. Une confusion totale mais temporaire.
+
+**Loi** : Normale (Gauss)
+
+#### 🧠 Pourquoi Normale ?
+
+La **Normal distribution** modélise :
+
+> **Des variations autour d'une moyenne**
+
+Ici :
+
+- Tu ne veux pas un chaos constant
+- Tu veux des "pics" occasionnels (durée variable)
+
+✔ Gameplay :
+
+- Permet d'introduire un niveau de chaos fluctuant
+- Facile à équilibrer avec μ (fréquence) et σ (variabilité)
+- Certains tours sont plus "brumeux" que d'autres
+
+---
+
+## 📊 Résumé des Lois Utilisées
+
+| 🎲 Événement     | 📐 Loi           | Type     | Propriétés                                 |
+| ---------------- | ---------------- | -------- | ------------------------------------------ |
+| 🎲 Révolution    | Binomiale + Hyp. | Discrète | Variables contrôlées, sans remise          |
+| 🔁 SwapReinePion | Poisson + Unif.  | Discrète | Rareté naturelle + sélection équitable     |
+| 🐎 Cavalier      | Exponentielle    | Continue | Absence de mémoire, imprévisible           |
+| 🧠 Dyscalculie   | Cauchy           | Continue | Queues lourdes, erreurs extrêmes possibles |
+| 🧬 Mutation      | Chi-Carré        | Continue | Asymétrique, certains types favorisés      |
+| 🧠 Rupture       | Uniforme disc.   | Discrète | Équité totale dans la sélection            |
+| 🏃 Fuite         | Exponentielle    | Continue | Imprévisibilité + impact fort              |
+| 🎨 Daltonisme    | Normale          | Continue | Variation autour d'une moyenne             |
+
+---
+
+## 🎮 Stratégie de Gameplay
+
+### 45% de déclencher un événement par tour (en mode Chaos)
+
+Une fois l'événement sélectionné aléatoirement, sa loi de probabilité détermine :
+
+- **Magnitude** : Combien de pions/cases sont affectés (Binomiale, Poisson, etc.)
+- **Sévérité** : L'ampleur de l'impact (Cauchy pour extrêmes, Normale pour modéré)
+- **Équité** : Comment on sélectionne (Uniforme pour pas de biais, Hypergéométrique pour cohérence)
+
+### Les pièges à éviter
+
+⚠️ **Revenir à l'Uniforme pour tout** : Les événements deviendraient prévisibles et ennuyeux  
+⚠️ **Utiliser les mêmes lois** : Perte de variété et d'intérêt  
+⚠️ **Ignorer les propres mathématiques des événements** : Le chaos perd du statut
+
+---
+
+## 🏗️ Architecture du Code
+
+**Fichier unifié** : `ChaoticEvent.hpp/cpp`
+
+- Tous les 8 événements en un seul manager
+- Une méthode par événement avec sa distribution propre
+- Intégration dans `GameState` pour exécution à chaque tour
+
+**Historique des événements** :
+
+- Format simplifié : `[Tour X] NomEvenement`
+- Pas de couleur joueur (les événements sont globaux)
+
+---
+
+## 📚 Lectures Complémentaires
+
+- Théorie des probabilités appliquée au gameplay
+- Balancing aléatoire dans les jeux de stratégie
+- Propriétés des lois continues vs discrètes

@@ -475,14 +475,7 @@ void Renderer::renderEventHistory(GameState& gameState)
         {
             const auto& event = eventHistory[i];
 
-            // Color based on player
-            ImVec4 playerColor = (event.player == Color::White)
-                                     ? ImVec4(1.0f, 1.0f, 1.0f, 1.0f)  // White
-                                     : ImVec4(0.3f, 0.3f, 0.3f, 1.0f); // Dark
-
-            ImGui::PushStyleColor(ImGuiCol_Text, playerColor);
-            ImGui::Text("[Tour %d] %s (%s)", event.turnNumber, event.eventName.c_str(), event.player == Color::White ? "Blanc" : "Noir");
-            ImGui::PopStyleColor();
+            ImGui::Text("[Tour %d] %s", event.turnNumber, event.eventName.c_str());
         }
     }
 

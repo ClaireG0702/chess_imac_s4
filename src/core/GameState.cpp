@@ -9,11 +9,10 @@
 #include "pieces/Queen.hpp"
 #include "pieces/Rook.hpp"
 
-GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_gameMode(GameMode::Classic), m_selectedRow(INVALID_POSITION), m_selectedCol(INVALID_POSITION), m_promotionPending(false), m_promotionRow(INVALID_POSITION), m_promotionCol(INVALID_POSITION), m_turnNumber(0), m_daltonianMode(false), m_daltonismTurnsRemaining(0), m_colorsSaved(false)
+GameState::GameState() : m_currentPlayer(Color::White), m_status(GameStatus::Playing), m_gameMode(GameMode::Classic), m_selectedRow(INVALID_POSITION), m_selectedCol(INVALID_POSITION), m_promotionPending(false), m_promotionRow(INVALID_POSITION), m_promotionCol(INVALID_POSITION), m_turnNumber(0), m_daltonianMode(false), m_daltonismTurnsRemaining(0), m_colorsSaved(false), m_rupturAttentionActive(false)
 {
     m_board.initialize();
-    m_gameEventManager  = nullptr;
-    m_pieceEventManager = nullptr;
+    m_chaosEventManager = nullptr;
 }
 
 void GameState::initialize()
@@ -33,16 +32,14 @@ void GameState::initialize()
     m_daltonismTurnsRemaining = 0;
     m_colorsSaved             = false;
 
-    // Initialize event managers for chaotic mode
+    // Initialize unified chaos event manager for chaotic mode
     if (m_gameMode == GameMode::Chaotic)
     {
-        m_gameEventManager  = std::make_unique<RandomGameEventManager>();
-        m_pieceEventManager = std::make_unique<RandomPieceEventManager>();
+        m_chaosEventManager = std::make_unique<RandomChaosEventManager>();
     }
     else
     {
-        m_gameEventManager  = nullptr;
-        m_pieceEventManager = nullptr;
+        m_chaosEventManager = nullptr;
     }
 }
 
@@ -57,6 +54,48 @@ bool GameState::makeMove(int fromRow, int fromCol, int toRow, int toCol)
     if (piece)
     {
         piece->setMoved();
+    }
+
+    // RuptureAttention: replace chosen move with random valid move (different from chosen)
+    if (m_rupturAttentionActive)
+    {
+        auto possibleMoves = piece->getPossibleMoves(fromRow, fromCol, m_board);
+        
+        // Filter out the player's chosen move
+        std::vector<std::pair<int, int>> otherMoves;
+        for (const auto& [row, col] : possibleMoves)
+        {
+            if (!(row == toRow && col == toCol))
+            {
+                otherMoves.push_back({row, col});
+            }
+        }
+
+        // If there are other valid moves, pick one randomly using Uniform distribution
+        if (!otherMoves.empty())
+        {
+            int selectedIndex = 0;
+            if (m_chaosEventManager)
+            {
+                selectedIndex = m_chaosEventManager->getRandomPieceSelector(0, otherMoves.size() - 1);
+                selectedIndex = std::min(selectedIndex, static_cast<int>(otherMoves.size() - 1));
+            }
+            else
+            {
+                // Fallback to standard random if manager not available
+                std::random_device              rd;
+                std::mt19937                    gen(rd());
+                std::uniform_int_distribution<> dis(0, otherMoves.size() - 1);
+                selectedIndex = dis(gen);
+            }
+            
+            auto [randomRow, randomCol] = otherMoves[selectedIndex];
+            toRow = randomRow;
+            toCol = randomCol;
+        }
+        // If no other moves available, use the chosen move
+        
+        m_rupturAttentionActive = false; // Disable after using
     }
 
     // Check if capturing the king
@@ -253,15 +292,14 @@ bool GameState::isKing(const Piece* piece) const
 
 void GameState::updateChaosEvents()
 {
-    if (m_gameMode != GameMode::Chaotic || !m_gameEventManager || !m_pieceEventManager)
+    if (m_gameMode != GameMode::Chaotic || !m_chaosEventManager)
     {
         return;
     }
 
-    m_gameEventManager->updateTurn();
-    m_pieceEventManager->updateTurn();
+    m_chaosEventManager->updateTurn();
 
-    // Calcul global: 45% de chance qu'UN événement se déclenche par tour
+    // 45% chance qu'UN événement GLOBAL se déclenche par tour
     std::random_device               rd;
     std::mt19937                     gen(rd());
     std::uniform_real_distribution<> eventProbability(0.0, 1.0);
@@ -270,42 +308,52 @@ void GameState::updateChaosEvents()
 
     if (eventProbability(gen) < EVENT_TRIGGER_CHANCE)
     {
-        // Choisir entre un événement du jeu (50%) ou un événement de pion (50%)
-        std::uniform_real_distribution<> categoryProbability(0.0, 1.0);
-        bool                             isGameEvent = categoryProbability(gen) < 0.5;
-
-        if (isGameEvent)
-        {
-            applyGameEvent(gen);
-        }
-        else
-        {
-            applyPieceEvent(gen);
-        }
+        // Apply game events only (global board-affecting events)
+        applyGameEvent(gen);
     }
 }
 
 void GameState::applyGameEvent(std::mt19937& gen)
 {
+    if (!m_chaosEventManager)
+        return;
+
+    // Select a random game event and trigger based on its distribution
     std::uniform_int_distribution<> eventDistribution(0, 3);
     int                             selectedEvent = eventDistribution(gen);
 
     switch (selectedEvent)
     {
     case 0:
-        if (shouldRevolutionHappen())
+        // Revolution: Uses Binomial distribution
+        if (m_chaosEventManager->shouldRevolutionHappen())
         {
             applyRevolutionEvent();
         }
         break;
     case 1:
-        applyTransEpidemicEvent();
+        // TransEpidemic: Uses Poisson distribution
+        // If Poisson returns > 0, event can trigger
+        if (m_chaosEventManager->getEpidemicTransformCount() > 0)
+        {
+            applyTransEpidemicEvent();
+        }
         break;
     case 2:
-        applyCavalierSauvageEvent();
+        // CavalierSauvage: Uses UniformDiscrete distribution for piece selection
+        // Exponential distribution determines trigger timing
+        if (m_chaosEventManager->getMutationChangeTime() > 0.5)
+        {
+            applyCavalierSauvageEvent();
+        }
         break;
     case 3:
-        applyDaltonismEvent();
+        // Daltonism: Uses ChiSquared distribution
+        // If confusion level is significant, trigger
+        if (m_chaosEventManager->getDaltonismConfusion() > 0.5)
+        {
+            applyDaltonismEvent();
+        }
         break;
     default:
         break;
@@ -314,22 +362,46 @@ void GameState::applyGameEvent(std::mt19937& gen)
 
 void GameState::applyPieceEvent(std::mt19937& gen)
 {
+    if (!m_chaosEventManager)
+        return;
+
+    // Select a random piece event and trigger based on its distribution
     std::uniform_int_distribution<> eventDistribution(0, 3);
     int                             selectedEvent = eventDistribution(gen);
 
     switch (selectedEvent)
     {
     case 0:
-        applyDyscalculiaEvent();
+        // Dyscalculia: Uses Normal distribution
+        // If error magnitude is significant, trigger
+        if (std::abs(m_chaosEventManager->getDyscalculiaError()) > 0.5)
+        {
+            applyDyscalculiaEvent();
+        }
         break;
     case 1:
-        applyMutationEvent();
+        // Mutation: Uses Exponential distribution
+        // If time value exceeds threshold, trigger
+        if (m_chaosEventManager->getMutationChangeTime() > 0.5)
+        {
+            applyMutationEvent();
+        }
         break;
     case 2:
-        applyRuptureAttentionEvent();
+        // RuptureAttention: Uses Cauchy distribution (heavy tails)
+        // If chaotic value is high, trigger
+        if (std::abs(m_chaosEventManager->getRuptureAttentionRandomBehavior()) > 1.0)
+        {
+            applyRuptureAttentionEvent();
+        }
         break;
     case 3:
-        applyFuitevent();
+        // Fuite: Uses Exponential distribution
+        // Rare triggering based on exponential timing
+        if (m_chaosEventManager->getMutationChangeTime() > 1.5)
+        {
+            applyFuitevent();
+        }
         break;
     default:
         break;
@@ -338,53 +410,57 @@ void GameState::applyPieceEvent(std::mt19937& gen)
 
 bool GameState::shouldRevolutionHappen() const
 {
-    if (!m_gameEventManager)
+    if (!m_chaosEventManager)
     {
         return false;
     }
-    return m_gameEventManager->shouldRevolutionHappen();
+    return m_chaosEventManager->shouldRevolutionHappen();
 }
 
 void GameState::applyRevolutionEvent()
 {
-    if (!m_gameEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("Révolution");
 
-    // Find all pawns of the current player
-    std::vector<std::pair<int, int>> playerPawns;
+    // Find all pawns on the board (any color)
+    std::vector<std::pair<int, int>> allPawns;
 
     for (int row = 0; row < BOARD_SIZE; ++row)
     {
         for (int col = 0; col < BOARD_SIZE; ++col)
         {
             Piece* piece = m_board.getPieceAt(row, col);
-            // Check if it's a pawn of the current player
-            if (piece && piece->getColor() == m_currentPlayer && dynamic_cast<Pawn*>(piece))
+            // Check if it's a pawn (any color)
+            if (piece && dynamic_cast<Pawn*>(piece))
             {
-                playerPawns.push_back({row, col});
+                allPawns.push_back({row, col});
             }
         }
     }
 
-    if (playerPawns.empty())
+    if (allPawns.empty())
         return;
 
-    // Randomly shuffle and select 2-3 pawns to swap color
+    // Use Binomial distribution to determine number of pawns affected (2-3)
+    int countToTransform = m_chaosEventManager->getRevolutionAffectedCount();
+    
+    // Clamp to 2-3 pawns
+    countToTransform = std::max(2, std::min(3, countToTransform));
+    
+    // Make sure we don't try to transform more pawns than available
+    countToTransform = std::min(countToTransform, static_cast<int>(allPawns.size()));
+
+    // Hypergeometric: selection without replacement (shuffle ensures no duplicates)
     std::random_device rd;
     std::mt19937       gen(rd());
-    std::shuffle(playerPawns.begin(), playerPawns.end(), gen);
-
-    // Select 2-3 pawns to transform
-    int                             numToTransform = std::min(3, static_cast<int>(playerPawns.size()));
-    std::uniform_int_distribution<> dis(2, numToTransform);
-    int                             countToTransform = dis(gen);
+    std::shuffle(allPawns.begin(), allPawns.end(), gen);
 
     // Invert the color of selected pawns
-    for (int i = 0; i < countToTransform && i < static_cast<int>(playerPawns.size()); ++i)
+    for (int i = 0; i < countToTransform; ++i)
     {
-        int row = playerPawns[i].first;
-        int col = playerPawns[i].second;
+        int row = allPawns[i].first;
+        int col = allPawns[i].second;
 
         Piece* piece = m_board.getPieceAt(row, col);
         if (piece)
@@ -398,7 +474,7 @@ void GameState::applyRevolutionEvent()
 // Dyscalculia: Normal - pieces move but miscalculate their distance
 void GameState::applyDyscalculiaEvent()
 {
-    if (!m_pieceEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("Dyscalculia");
 
@@ -442,9 +518,11 @@ void GameState::applyDyscalculiaEvent()
                                                                       : -1;
                 int distance = std::max(std::abs(moveRow - row), std::abs(moveCol - col));
 
-                // Apply incorrect distance: distance +/- 1
-                std::uniform_int_distribution<> distanceDis(0, 1);
-                int                             incorrectDistance = distance + (distanceDis(gen) == 0 ? 1 : -1);
+                // Use Cauchy distribution for movement error (heavy tail = more chaotic errors)
+                double cauchyError = m_chaosEventManager->getRuptureAttentionRandomBehavior();
+                int    errorOffset = static_cast<int>(std::abs(cauchyError)); // Take absolute value for distance offset
+
+                int incorrectDistance = distance + errorOffset;
 
                 if (incorrectDistance > 0)
                 {
@@ -465,11 +543,9 @@ void GameState::applyDyscalculiaEvent()
 // Mutation: Exponential - pieces change type over time
 void GameState::applyMutationEvent()
 {
-    if (!m_pieceEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("Mutation");
-
-    double changeTime = m_pieceEventManager->getMutationChangeTime();
 
     // Randomly select a piece and change its type
     std::vector<std::pair<int, int>> transformablePieces;
@@ -490,15 +566,20 @@ void GameState::applyMutationEvent()
     {
         std::random_device              rd;
         std::mt19937                    gen(rd());
-        std::uniform_int_distribution<> dis(0, transformablePieces.size() - 1);
+        std::uniform_int_distribution<> pieceDis(0, transformablePieces.size() - 1);
 
-        auto [row, col] = transformablePieces[dis(gen)];
+        auto [row, col] = transformablePieces[pieceDis(gen)];
         Piece* piece    = m_board.getPieceAt(row, col);
         if (piece)
         {
-            Color     color   = piece->getColor();
+            Color color = piece->getColor();
+            
+            // Use Chi-squared distribution to determine the new piece type
+            double chiSquaredValue = m_chaosEventManager->getDaltonismConfusion();
+            int typeIndex = static_cast<int>(chiSquaredValue) % 5;
+            
             PieceType types[] = {PieceType::Pawn, PieceType::Knight, PieceType::Bishop, PieceType::Rook, PieceType::Queen};
-            PieceType newType = types[dis(gen) % 5];
+            PieceType newType = types[typeIndex];
 
             std::unique_ptr<Piece> newPiece;
             switch (newType)
@@ -518,7 +599,7 @@ void GameState::applyMutationEvent()
 // Trans Epidemic: Poisson - transforms Pawns into Queens and Queens into Pawns
 void GameState::applyTransEpidemicEvent()
 {
-    if (!m_gameEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("SwapReinePion");
 
@@ -543,12 +624,13 @@ void GameState::applyTransEpidemicEvent()
 
     if (!pawnOrQueen.empty())
     {
-        std::random_device              rd;
-        std::mt19937                    gen(rd());
-        std::uniform_int_distribution<> dis(0, pawnOrQueen.size() - 1);
+        // Use UniformDiscrete distribution to select a Pawn or Queen
+        int selectedIndex = m_chaosEventManager->getRandomPieceSelector(0, pawnOrQueen.size() - 1);
+        
+        // Make sure index is valid
+        selectedIndex = std::min(selectedIndex, static_cast<int>(pawnOrQueen.size() - 1));
 
-        // Select one random Pawn or Queen
-        auto [row, col] = pawnOrQueen[dis(gen)];
+        auto [row, col] = pawnOrQueen[selectedIndex];
         Piece* piece    = m_board.getPieceAt(row, col);
 
         if (piece)
@@ -576,7 +658,7 @@ void GameState::applyTransEpidemicEvent()
 // CavalierSauvage: UniformDiscrete - transforms a random piece into a Knight
 void GameState::applyCavalierSauvageEvent()
 {
-    if (!m_gameEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("CavalierSauvage");
 
@@ -594,12 +676,13 @@ void GameState::applyCavalierSauvageEvent()
 
     if (!pieces.empty())
     {
-        std::random_device              rd;
-        std::mt19937                    gen(rd());
-        std::uniform_int_distribution<> dis(0, pieces.size() - 1);
+        // Use UniformDiscrete distribution to select a random piece
+        int selectedIndex = m_chaosEventManager->getRandomPieceSelector(0, pieces.size() - 1);
+        
+        // Make sure index is valid
+        selectedIndex = std::min(selectedIndex, static_cast<int>(pieces.size() - 1));
 
-        // Select one random piece
-        auto [row, col] = pieces[dis(gen)];
+        auto [row, col] = pieces[selectedIndex];
         Piece* piece    = m_board.getPieceAt(row, col);
 
         if (piece)
@@ -612,75 +695,25 @@ void GameState::applyCavalierSauvageEvent()
     }
 }
 
-// RuptureAttention: Cauchy - random chaotic behavior - pieces move to random valid destinations
+// RuptureAttention: Cauchy - player's next move will be random instead of chosen
 void GameState::applyRuptureAttentionEvent()
 {
-    if (!m_pieceEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("RuptureAttention");
 
-    double chaotic = m_pieceEventManager->getRuptureAttentionRandomBehavior();
-
-    // Select random pieces and move them to random valid destinations
-    std::vector<std::pair<int, int>> pieces;
-    for (int row = 0; row < BOARD_SIZE; ++row)
-    {
-        for (int col = 0; col < BOARD_SIZE; ++col)
-        {
-            if (m_board.getPieceAt(row, col) != nullptr && !isKing(m_board.getPieceAt(row, col)))
-            {
-                pieces.push_back({row, col});
-            }
-        }
-    }
-
-    if (!pieces.empty())
-    {
-        std::random_device rd;
-        std::mt19937       gen(rd());
-
-        // Select 1 random piece
-        std::uniform_int_distribution<> pieceDis(0, pieces.size() - 1);
-        auto [row, col] = pieces[pieceDis(gen)];
-
-        Piece* piece = m_board.getPieceAt(row, col);
-        if (piece)
-        {
-            // Get all possible moves for this piece
-            auto possibleMoves = piece->getPossibleMoves(row, col, m_board);
-
-            if (possibleMoves.size() >= 2)
-            {
-                // Remove the original position from possible moves if it exists
-                possibleMoves.erase(
-                    std::remove_if(possibleMoves.begin(), possibleMoves.end(), [row, col](const std::pair<int, int>& move) {
-                        return move.first == row && move.second == col;
-                    }),
-                    possibleMoves.end()
-                );
-
-                // Select a random move from the remaining possible moves
-                if (!possibleMoves.empty())
-                {
-                    std::uniform_int_distribution<> moveDis(0, possibleMoves.size() - 1);
-                    auto [toRow, toCol] = possibleMoves[moveDis(gen)];
-
-                    // Move the piece to the random position
-                    m_board.movePiece(row, col, toRow, toCol);
-                }
-            }
-        }
-    }
+    // Activate the flag: next player move will be random
+    m_rupturAttentionActive = true;
 }
 
-// Fuite: Hypergeometric - forces pieces to move only to isolated squares
+// Fuite: Hypergeometric - forces current player's piece to move to isolated square, ends turn
 void GameState::applyFuitevent()
 {
-    if (!m_pieceEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("Fuite");
 
-    // Find all pieces that can move to isolated squares
+    // Find all pieces of CURRENT PLAYER that can move to isolated squares
     std::vector<std::pair<int, int>> validPieces;
 
     for (int row = 0; row < BOARD_SIZE; ++row)
@@ -688,7 +721,8 @@ void GameState::applyFuitevent()
         for (int col = 0; col < BOARD_SIZE; ++col)
         {
             Piece* piece = m_board.getPieceAt(row, col);
-            if (piece && !isKing(piece))
+            // Filter: current player's piece, not a king, and has valid moves
+            if (piece && piece->getColor() == m_currentPlayer && !isKing(piece))
             {
                 // Get possible moves for this piece
                 auto possibleMoves = piece->getPossibleMoves(row, col, m_board);
@@ -732,7 +766,7 @@ void GameState::applyFuitevent()
         }
     }
 
-    // If there are pieces that can move to isolated squares
+    // If there are pieces of current player that can move to isolated squares
     if (!validPieces.empty())
     {
         std::random_device              rd;
@@ -785,6 +819,9 @@ void GameState::applyFuitevent()
                 std::uniform_int_distribution<> moveDis(0, isolatedMoves.size() - 1);
                 auto [toRow, toCol] = isolatedMoves[moveDis(gen)];
                 m_board.movePiece(row, col, toRow, toCol);
+                
+                // Turn ends: switch to next player
+                switchPlayer();
             }
         }
     }
@@ -793,7 +830,7 @@ void GameState::applyFuitevent()
 // Daltonism: Makes all pieces appear gray and allows playing any piece
 void GameState::applyDaltonismEvent()
 {
-    if (!m_gameEventManager)
+    if (!m_chaosEventManager)
         return;
     recordEvent("Daltonisme");
 
@@ -831,56 +868,65 @@ void GameState::applyDaltonismEvent()
         }
     }
 
-    // Enable Daltonism mode for 1 turn (set to 2 because we'll decrement at end of current move)
+    // Use Normal distribution to determine chaos intensity
+    // Higher absolute value = stronger effect duration
+    double chaosIntensity = std::abs(m_chaosEventManager->getDyscalculiaError());
+    
+    // Map intensity to turn duration: base 1 turn, can extend based on intensity
+    // Clamp to 1 turn (intensity mostly controls the visual chaos)
+    int turnDuration = 2; // 2 because we decrement at end of move, so 1 turn for player
+    
     m_daltonianMode           = true;
-    m_daltonismTurnsRemaining = 2;
+    m_daltonismTurnsRemaining = turnDuration;
 }
 
 void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCol)
 {
-    if (!movedPiece || !m_pieceEventManager)
+    if (!movedPiece || !m_chaosEventManager)
     {
         return;
     }
 
-    std::uint8_t characteristics = movedPiece->getCharacteristics();
+    // Generate random value for piece events (45% chance each)
+    std::random_device               rd;
+    std::mt19937                     gen(rd());
+    std::uniform_real_distribution<> eventTrigger(0.0, 1.0);
+    const double PIECE_EVENT_CHANCE = 0.45; // 45% chance per piece characteristic
 
-    // Check Dyscalculia characteristic
+    m_chaosEventManager->updateTurn();
+
+    // Check Dyscalculia characteristic - trigger randomly if present
     if (movedPiece->hasCharacteristic(PieceCharacteristic::Dyscalculia))
     {
-        double error = m_pieceEventManager->getDyscalculiaError();
-        if (std::abs(error) > 0.5)
-        { // If error magnitude is significant
+        if (eventTrigger(gen) < PIECE_EVENT_CHANCE)
+        {
             applyDyscalculiaEvent();
         }
     }
 
-    // Check Mutation characteristic
+    // Check Mutation characteristic - trigger randomly if present
     if (movedPiece->hasCharacteristic(PieceCharacteristic::Mutation))
     {
-        double changeTime = m_pieceEventManager->getMutationChangeTime();
-        if (changeTime > 0.5)
-        { // If time value exceeds threshold
+        if (eventTrigger(gen) < PIECE_EVENT_CHANCE)
+        {
             applyMutationEvent();
         }
     }
 
-    // Check RuptureAttention characteristic
+    // Check RuptureAttention characteristic - trigger randomly if present
     if (movedPiece->hasCharacteristic(PieceCharacteristic::RuptureAttention))
     {
-        double chaotic = m_pieceEventManager->getRuptureAttentionRandomBehavior();
-        if (std::abs(chaotic) > 1.0)
-        { // If chaotic value is high (Cauchy heavy tails)
+        if (eventTrigger(gen) < PIECE_EVENT_CHANCE)
+        {
             applyRuptureAttentionEvent();
         }
     }
 
-    // Check Fuite characteristic
+    // Check Fuite characteristic - trigger randomly if present
     if (movedPiece->hasCharacteristic(PieceCharacteristic::Fuite))
     {
-        int isolatedCount = m_pieceEventManager->getFuiteIsolatedCount();
-        if (isolatedCount > 10)
-        { // If isolation count exceeds threshold
+        if (eventTrigger(gen) < PIECE_EVENT_CHANCE)
+        {
             applyFuitevent();
         }
     }
@@ -888,7 +934,7 @@ void GameState::applyCharacteristicEvents(Piece* movedPiece, int toRow, int toCo
 
 void GameState::recordEvent(const std::string& eventName)
 {
-    m_eventHistory.push_back({eventName, m_turnNumber, m_currentPlayer});
+    m_eventHistory.push_back({eventName, m_turnNumber});
 }
 
 void GameState::disableDaltonism()
